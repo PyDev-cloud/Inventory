@@ -1,0 +1,54 @@
+{% extends "../navbar.html" %}
+{% block title %}Registration{% endblock title %}
+{% block content %}
+<div class="contact-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-6">
+                <form  class="contact-form" novalidate method="POST">
+                    {% csrf_token %}
+                    
+                        {% if messages %}
+                        <div class="col-lg-6 py-2">
+                            {% include "../message.html" %}
+                        </div>
+                        {% endif %}
+                        <div class="col-lg-6 py-2">
+                            <label for="username">User Name</label>
+                            <input name="username" class="form-control" type="text" placeholder="Enter Username">
+                            {{form.username.errors}}
+                        </div>
+                        <div class="col-lg-6 py-2">
+                            <label for="email">Email</label>
+                            <input name="email" class="form-control" type="Email" placeholder="Enter Email Address">
+                            {{form.email.errors}}
+                        </div>
+                        <div class="col-lg-6 py-2">
+                            <label for="password">Password</label>
+                            <input name="password" class="form-control" type="password" placeholder="Enter Password">
+                            {{form.password.errors}}
+                        </div>
+                        <div class="col-lg-6 py-2">
+                            <label for="password2">Confirm Password</label>
+                            <input name="password2" class="form-control" type="password" placeholder="Confirm Password">
+                            {{form.password2.errors}}
+                        </div>
+                       
+                        <div class="col-lg-6 text-right">
+                            <button class="btn-block" type="submit">Register</button>
+                        </div>
+                        <div class="col-lg-6 text-right text-center my-3">
+                            <p>
+                                Already Have an account
+                                <strong class="ml-2">
+                                    <a class=" text-decoration-none text-dark" href="{% url "login" %}">Login </a>here
+                                </strong>
+                            </p>
+                        </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock content %}

@@ -1,0 +1,8 @@
+{% extends "../navbar.html" %} {% load static %} {% block content %}
+<h1>Add a New SubCategory</h1>
+<form method="post">
+  {% csrf_token %} {{ form.as_p }}
+  <!-- Render the form fields -->
+  <button type="submit">Add Subcategory</button>
+</form>
+{% endblock content %}
