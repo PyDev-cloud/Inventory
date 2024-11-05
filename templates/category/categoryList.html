@@ -1,19 +1,25 @@
 {% extends "../navbar.html" %}
 {% load static %}
 {% block content %}
-<table class="table table-striped">
+<div class="container ">
+  <h2>This is Category list Page</h2>
+  <a class="btn btn-primary" href="{% url "category" %}" role="button">Create Category</a>
+<div class="d-flex justify-content-center align-items-center w-100 vh-80">
+  
+<table class="table table-striped w-100">
+  
     <thead>
         <tr>
-          <th scope="col">SL</th>
-          <th scope="col">Name</th>
-          <th scope="col">Action</th>
+          <th scope="col" class="px-5">SL</th>
+          <th scope="col" class="px-5">Name</th>
+          <th scope="col" class="px-5">Action</th>
        
         </tr>
       </thead>
       <tbody>
         {% for c in  Category%}
         <tr>
-          <th scope="row">{{ forloop.counter }}</th>
+          <th scope="row" class="px-5">{{ forloop.counter }}</th>
           <td>{{c.name}}</td>
             <td>
                 
@@ -24,8 +30,8 @@
         {% endfor %}
     </tbody>
   </table>
-
-
+</div>
+</div>
 
 
 
