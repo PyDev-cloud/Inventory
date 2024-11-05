@@ -1,0 +1,25 @@
+{% extends "../navbar.html" %} {% load static %}
+ {% block content %}
+ 
+<form method="post" enctype="multipart/form-data" >
+  {% csrf_token %}
+    
+
+  <div class="row">
+      <div class="col-md-9"> 
+              <label for="id_quantity" class="form-label">Category Name</label>
+              {{ form.name}}
+          </div>
+  </div>
+
+  
+  <div class="mb-3">
+      <button type="submit" class="btn btn-primary">
+          {% if form.instance.pk %}Update{% else %}Create{% endif %}
+      </button>
+      <a href="{% url "categorylist" %}" class="btn btn-secondary">Cancel</a>
+  </div>
+</form>
+
+
+{% endblock %}

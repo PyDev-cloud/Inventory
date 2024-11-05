@@ -1,0 +1,51 @@
+{% extends "../navbar.html" %}
+{% load static %}
+{% block content %}
+<table class="table table-striped">
+    <thead>
+        <tr>
+          <th scope="col">SL</th>
+          <th scope="col">Image</th>
+          <th scope="col">Name</th>
+          <th scope="col">Quantity</th>
+          <th scope="col">Purchase Price</th>
+          <th scope="col">Sales Price</th>
+          <th scope="col">Category</th>
+          <th scope="col">Subcategory</th>
+          <th scope="col">Unit</th>
+          <th scope="col">Re-Order Quantity</th>
+          <th scope="col">SKU</th>
+          <th scope="col">Status</th>
+          <th scope="col">Actions</th>
+       
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in  product%}
+        <tr>
+          <th scope="row">{{ forloop.counter }}</th>
+          <td >{% if c.thumbnail_image %}
+            <img src="{{ c.thumbnail_image.url }}" alt="{{ c.name }}" style="max-width: 100px; max-height: 100px;">
+        {% else %}
+            No image available
+        {% endif %}</td>
+          <td>{{c.name}}</td>
+          <td>{{c.quantity}}</td>
+          <td>{{c.purchase_price}}</td>
+          <td>{{c.sale_price}}</td>
+          <td>{{c.category.name}}</td>
+          <td>{{c.SubCategory.name}}</td>
+          <td>{{c.unit_mesurement}} {{c.unit_type}}</td>
+          <td>{{c.reorder_quantity}}</td>
+          <td>{{c.sku}}</td>
+          <td>{{c.reorder_quantity}}</td>
+            <td>
+                
+                <a href="{% url "productupdate" c.pk%}" class="btn btn-info">Edit</a> 
+                <a href="#" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this category?')">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+  </table>
+  {% endblock content %}

@@ -1,0 +1,32 @@
+{% extends "../navbar.html" %}
+{% load static %}
+{% block content %}
+<table class="table table-striped">
+    <thead>
+        <tr>
+          <th scope="col">SL</th>
+          <th scope="col">Name</th>
+          <th scope="col">Action</th>
+       
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in  Category%}
+        <tr>
+          <th scope="row">{{ forloop.counter }}</th>
+          <td>{{c.name}}</td>
+            <td>
+                
+                <a href="{% url "categoryupdate" c.pk %}" class="btn btn-info">Edit</a> 
+                <a href="#" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this category?')">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+  </table>
+
+
+
+
+
+{% endblock content %}
