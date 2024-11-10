@@ -1,0 +1,44 @@
+{% extends "../navbar.html" %}
+{% load static %}
+{% block content %}
+<h2>This is Product list Page</h2>
+  <a class="btn btn-primary" href="{% url "purchase" %}" role="button">Create Puschase</a>
+<table class="table table-striped">
+    <thead>
+        <tr>
+          <th scope="col">SL</th>
+          <th scope="col">Product Name</th>
+          <th scope="col">Supplier Name</th>
+          <th scope="col">Quantity</th>
+          <th scope="col">Total Amount</th>
+          <th scope="col">Discount</th>
+          <th scope="col">Paid Amount</th>
+          <th scope="col">Due Amount</th>
+          <th scope="col">Date</th>
+          <th scope="col">Actions</th>
+       
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in  Purchase%}
+        <tr>
+          <th scope="row">{{ forloop.counter }}</th>
+          <td >{{c.productname}}</td>
+          <td>{{c.suppliername}}</td>
+          <td>{{c.quantity}}</td>
+          <td>{{c.totalAmount}}</td>
+          <td>{{c.discount}}</td>
+          <td>{{c.paidAmount}}</td>
+          <td>{{c.dueAmount}}</td>
+          <td>{{c.create_at}}</td>
+          
+            <td>
+                
+                <a href="{% url "productupdate" c.pk%}" class="btn btn-info">Edit</a> 
+                <a href="#" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this category?')">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+  </table>
+  {% endblock content %}

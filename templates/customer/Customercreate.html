@@ -1,8 +1,17 @@
 {% extends "../navbar.html" %} {% load static %} {% block content %}
-<h1>Add a New Product</h1>
-<form method="post">
-  {% csrf_token %} {{ form.as_p }}
-  <!-- Render the form fields -->
-  <button type="submit">Add Product</button>
-</form>
+<div class="d-flex justify-content-center align-items-center vh-100">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <h2 class="text-center mb-4">Create Customer</h2>
+        <form method="post">
+          {% csrf_token %} {{ form.as_p }}
+          <!-- Render the form fields -->
+          <button type="submit">Add Customer</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock content %}

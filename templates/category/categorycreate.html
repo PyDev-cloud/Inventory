@@ -1,27 +1,29 @@
-{% extends "../navbar.html" %} {% load static %}
- {% block content %}
- <h1>This is Category Create Page</h1>
- <div class="d-flex justify-content-center align-items-center w-100 vh-80">
-    
-<form method="post" enctype="multipart/form-data" >
-  {% csrf_token %}
-    
+{% extends "../navbar.html" %} {% load static %} {% block content %}
+<div class="d-flex justify-content-center align-items-center vh-100">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <h2 class="text-center mb-4">Category Form</h2>
 
-  <div class="row">
-      <div class="col-md-9"> 
-              <label for="id_quantity" class="form-label">Category Name</label>
-              {{ form.name}}
+        <!-- Form starts here -->
+        <form method="post">
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label for="{{ form.name.id_for_label }}" class="form-label"
+              >{{ form.name.label }}</label
+            >
+            {{ form.name }}
+            <!-- Renders the name field with applied Bootstrap classes -->
           </div>
-  </div>
 
-  
-  <div class="mb-3 py-3">
-      <button type="submit" class="btn btn-primary">
-          {% if form.instance.pk %}Update{% else %}Create{% endif %}
-      </button>
-      <a href="{% url "categorylist" %}" class="btn btn-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary btn-lg w-100">
+            Submit
+          </button>
+        </form>
+      </div>
+    </div>
   </div>
-</form>
 </div>
 
 {% endblock %}

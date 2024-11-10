@@ -25,25 +25,92 @@ class ProductForm(forms.ModelForm):
         
 
 
+class SubCategoryForm(forms.ModelForm):
+    class Meta:
+        model=SubCategory
+        fields=['name','category']
+        widgets={
+            'name': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name'}),
+            'category': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name'})
+        }
+        
+
 class CategoryForm(forms.ModelForm):
     class Meta:
         model=category
         fields=['name']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name'})
+            
 
-class SubcategoryForm(forms.ModelForm):
-    class Meta:
-        model=SubCategory
-        fields="__all__"
+        }
+      
 
 
 
 class SupplierForm(forms.ModelForm):
     class Meta:
         model=Supplier
-        fields="__all__"
+        fields=['name','email','mobile','Address']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name'}),
+            'email': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name'}),
+            'mobile': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name'}),
+            'Address': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name'}),
+          
+
+        }
+
 
 
 class CustomarForm(forms.ModelForm):
     class Meta:
         model=Customer
-        fields="__all__"
+        fields=['name','Email','Mobile','Address']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name'}),
+            'Email': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name'}),
+            'Mobile': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name'}),
+            'Address': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name'}),
+          
+
+        }
+
+class PurchaseForm(forms.ModelForm):
+    class Meta:
+        model = Purchase
+        fields = ['productname', 'suppliername', 'quantity', 'discount', 'paidAmount']
+
+    def clean(self):
+        cleaned_data = super().clean()
+        quantity = cleaned_data.get('quantity')
+        product = cleaned_data.get('productname')
+        discount = cleaned_data.get('discount')
+        paid_amount = cleaned_data.get('paidAmount')
+
+        # Calculate totalAmount based on product price and quantity
+        if product and quantity:
+            total_amount = product.purchase_price * quantity
+            cleaned_data['totalAmount'] = total_amount
+
+        if discount is None:
+            cleaned_data['discount'] = 0  # Default discount if not provided
+        
+        if paid_amount is None:
+            cleaned_data['paidAmount'] = 0  # Default paid amount if not provided
+
+        # Calculate dueAmount
+        total_amount = cleaned_data.get('totalAmount')
+        due_amount = total_amount - paid_amount - discount
+        cleaned_data['dueAmount'] = due_amount
+
+        return cleaned_data
+    
+
+class SellesForm(forms.ModelForm):
+    class Meta:
+        model = Selles
+        fields = ['product', 'customer', 'quantity', 'discountAmount', 'paidAmount']
+
+    def __init__(self, *args, **kwargs):
+        super(SellesForm, self).__init__(*args, **kwargs)

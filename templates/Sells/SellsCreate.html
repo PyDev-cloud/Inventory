@@ -1,0 +1,18 @@
+{% extends "../navbar.html" %} {% block content %}
+<h1>Create a New Sale</h1>
+
+<!-- Display form errors if any -->
+{% if form.errors %}
+<ul>
+  {% for field in form %} {% for error in field.errors %}
+  <li>{{ error }}</li>
+  {% endfor %} {% endfor %}
+</ul>
+{% endif %}
+
+<form method="post">
+  {% csrf_token %} {{ form.as_p }}
+  <!-- Renders the form fields -->
+  <button type="submit">Create Sale</button>
+</form>
+{% endblock content %}

@@ -1,6 +1,8 @@
 {% extends "../navbar.html" %}
 {% load static %}
 {% block content %}
+<h2>This is Product list Page</h2>
+  <a class="btn btn-primary" href="{% url "product" %}" role="button">Create Category</a>
 <table class="table table-striped">
     <thead>
         <tr>
@@ -8,12 +10,12 @@
           <th scope="col">Image</th>
           <th scope="col">Name</th>
           <th scope="col">Quantity</th>
-          <th scope="col">Purchase Price</th>
-          <th scope="col">Sales Price</th>
+          <th scope="col">P.Price</th>
+          <th scope="col">S.Price</th>
           <th scope="col">Category</th>
           <th scope="col">Subcategory</th>
           <th scope="col">Unit</th>
-          <th scope="col">Re-Order Quantity</th>
+          <th scope="col">R.Quantity</th>
           <th scope="col">SKU</th>
           <th scope="col">Status</th>
           <th scope="col">Actions</th>

@@ -24,8 +24,22 @@ urlpatterns = [
     path('customerUpdate/<int:pk>/edit/',CustomerUpdateView.as_view(),name="customerupdate"),
 
 
-    
-    
+    path('purchase/',PurchaseCreate.as_view(),name="purchase"),
+    path('purchase/receipt/<int:purchase_id>/', PurchaseReceiptView.as_view(), name="purchase_receipt"),  # Show a specific receipt
+
+    path("purchaseList/",PurchaseListView.as_view(),name="purchaseList"),
+
+
+
+    path('sale/create/', SellesCreateView.as_view(), name='create_sell'),  # URL for creating a new sale
+
+
+    path('daily/', DailyReportView.as_view(), name='daily_report'),
+    path('weekly/', WeeklyReportView.as_view(), name='weekly_report'),
+    path('monthly/', MonthlyReportView.as_view(), name='monthly_report'),
+    #path('custom/<str:start_date>/<str:end_date>/', CustomDateReportView.as_view(), name='custom_date_report'),
+    path('custom-date-report/', CustomDateReportView.as_view(), name='custom_date_report'),
+
     
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

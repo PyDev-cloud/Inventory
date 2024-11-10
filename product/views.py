@@ -1,7 +1,12 @@
+from django.http import HttpResponse
+from django.db.models import Sum
+from django.utils import timezone
+from datetime import timedelta
 from pyexpat.errors import messages
 from django.http import Http404
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
+from datetime import datetime
 from django.views.generic import *
 from .models import *
 from .forms import *
@@ -67,7 +72,7 @@ class SubcategoryViewlist(ListView):
       
 class SubCategoryView(CreateView):
     model=SubCategory
-    form_class=SubcategoryForm
+    form_class=SubCategoryForm
     template_name="subcategory/Subcategorycreate.html"
     #success_url = reverse_lazy('success')  # Redirect after successful creation
     def form_valid(self, form):
@@ -82,7 +87,7 @@ class SubCategoryView(CreateView):
 #SubCategory Update View
 class SubCategoryUpdateView(UpdateView):
     model = SubCategory
-    form_class = SubcategoryForm  # The form used for editing
+    form_class = SubCategoryForm  # The form used for editing
     template_name = 'subcategory/subcategoryUpdate.html'  # The template to render the form
     context_object_name = 'SubCategory'  # The context variable used in the template
 
@@ -223,4 +228,257 @@ class CustomerUpdateView(UpdateView):
        except Customer.DoesNotExixt:
             raise Http404("category not found or inactive")
        return obj
+
+
+
+
+
+class PurchaseReceiptView(View):
+    def get(self, request, purchase_id):
+        # Fetch the Purchase object by ID, or return 404 if it doesn't exist
+        purchase = get_object_or_404(Purchase, id=purchase_id)
+
+        # Render the receipt template with the purchase data
+        return render(request, 'Receipt/PurchaseReceipt.html', {'purchase': purchase})
     
+class PurchaseCreate(CreateView):
+    model = Purchase
+    form_class = PurchaseForm
+    template_name = 'purchase/Purchasecreate.html'
+    success_url = reverse_lazy('purchaseList')  # Redirect to the order list view after successful creation
+
+    def form_valid(self, form):
+        # Save the purchase object to the database
+        self.object = form.save()
+
+        # Redirect to the purchase receipt page for the created purchase
+        return redirect('purchase_receipt', purchase_id=self.object.id)
+    
+
+class PurchaseListView(ListView):
+     model = Purchase
+     template_name = "purchase/purchaseList.html"
+     def get_context_data(self, **kwargs):
+            context = super().get_context_data(**kwargs)
+            context["Purchase"] = self.model.objects.all()
+            return context
+
+
+     
+
+
+class SellesCreateView(CreateView):
+    model = Selles
+    form_class = SellesForm
+    template_name = 'Sells/SellsCreate.html'  # Replace with your template's name
+    success_url = reverse_lazy('selles_list')  # Redirect after a successful submission (adjust URL as needed)
+
+    def form_valid(self, form):
+        # Extract data from the form
+        product = form.cleaned_data['product']
+        quantity = form.cleaned_data['quantity']
+        discountAmount = form.cleaned_data['discountAmount']
+        paidAmount = form.cleaned_data['paidAmount']
+
+        # Calculate totalPrice (product price * quantity)
+        totalPrice = product.sale_price * quantity
+
+        # Calculate dueAmount (totalPrice - paidAmount - discountAmount)
+        dueAmount = totalPrice - paidAmount - discountAmount
+
+        # Set the calculated values on the form instance
+        form.instance.totalPrice = totalPrice
+        form.instance.dueAmount = dueAmount
+
+        # Save the form data
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        # Handle any form validation errors (optional)
+        return super().form_invalid(form)
+    
+
+
+
+class DailyReportView(TemplateView):
+    template_name = 'report/DailyReport.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Get today's date
+        today = timezone.now().date()
+
+        # Total purchase for today
+        total_purchase = Purchase.objects.filter(create_at=today).aggregate(
+            total_quantity=Sum('quantity'),
+            total_amount=Sum('totalAmount')
+        )
+
+        # Total sales for today
+        total_sales = Selles.objects.filter(created_at__date=today).aggregate(
+            total_quantity=Sum('quantity'),
+            total_amount=Sum('totalPrice')
+        )
+        
+        # Total purchase cost for today
+        total_purchase_cost = Purchase.objects.filter(create_at=today).aggregate(
+            total_cost=Sum('productname__purchase_price')
+        )['total_cost'] or 0
+
+        # Total sales amount for today
+        total_sales_amount = total_sales['total_amount'] or 0
+        
+        # Profit calculation
+        profit = total_sales_amount - total_purchase_cost
+
+        context.update({
+            'total_purchase': total_purchase,
+            'total_sales': total_sales,
+            'profit': profit,
+            'today': today
+        })
+        return context
+
+
+class WeeklyReportView(TemplateView):
+    template_name = 'report/weekly_report.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Get today's date and calculate the start of the current week (Monday)
+        today = timezone.now().date()
+        start_date = today - timedelta(days=today.weekday())
+
+        # Total purchase for the week
+        total_purchase = Purchase.objects.filter(create_at__gte=start_date).aggregate(
+            total_quantity=Sum('quantity'),
+            total_amount=Sum('totalAmount')
+        )
+
+        # Total sales for the week
+        total_sales = Selles.objects.filter(created_at__gte=start_date).aggregate(
+            total_quantity=Sum('quantity'),
+            total_amount=Sum('totalPrice')
+        )
+        
+        # Total purchase cost for the week
+        total_purchase_cost = Purchase.objects.filter(create_at__gte=start_date).aggregate(
+            total_cost=Sum('productname__purchase_price')
+        )['total_cost'] or 0
+
+        # Total sales amount for the week
+        total_sales_amount = total_sales['total_amount'] or 0
+        
+        # Profit calculation
+        profit = total_sales_amount - total_purchase_cost
+
+        context.update({
+            'total_purchase': total_purchase,
+            'total_sales': total_sales,
+            'profit': profit,
+            'start_date': start_date,
+            'end_date': today
+        })
+        return context
+
+class MonthlyReportView(TemplateView):
+    template_name = 'report/monthly_report.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Get today's date and calculate the start of the current month
+        today = timezone.now().date()
+        start_date = today.replace(day=1)
+
+        # Total purchase for the month
+        total_purchase = Purchase.objects.filter(create_at__gte=start_date).aggregate(
+            total_quantity=Sum('quantity'),
+            total_amount=Sum('totalAmount')
+        )
+
+        # Total sales for the month
+        total_sales = Selles.objects.filter(created_at__gte=start_date).aggregate(
+            total_quantity=Sum('quantity'),
+            total_amount=Sum('totalPrice')
+        )
+        
+        # Total purchase cost for the month
+        total_purchase_cost = Purchase.objects.filter(create_at__gte=start_date).aggregate(
+            total_cost=Sum('productname__purchase_price')
+        )['total_cost'] or 0
+
+        # Total sales amount for the month
+        total_sales_amount = total_sales['total_amount'] or 0
+        
+        # Profit calculation
+        profit = total_sales_amount - total_purchase_cost
+
+        context.update({
+            'total_purchase': total_purchase,
+            'total_sales': total_sales,
+            'profit': profit,
+            'start_date': start_date,
+            'end_date': today
+        })
+        return context
+
+
+class CustomDateReportView(TemplateView):
+    template_name = 'report/DailyReport.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Get the custom start and end dates from the URL (query parameters)
+        start_date_str = self.request.GET.get('start_date')
+        end_date_str = self.request.GET.get('end_date')
+
+        # If dates are not provided, default to the last 7 days
+        if not start_date_str or not end_date_str:
+            end_date = timezone.now().date()
+            start_date = end_date - timedelta(days=7)
+        else:
+            # Convert the date strings to date objects
+            try:
+                start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+                end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                context['error'] = "Invalid date format. Please use YYYY-MM-DD."
+                return context
+
+        # Query to get total purchase for the custom date range
+        total_purchase = Purchase.objects.filter(create_at__range=[start_date, end_date]).aggregate(
+            total_quantity=Sum('quantity'),
+            total_amount=Sum('totalAmount')
+        )
+
+        # Query to get total sales for the custom date range
+        total_sales = Selles.objects.filter(create_at__range=[start_date, end_date]).aggregate(
+            total_quantity=Sum('quantity'),
+            total_amount=Sum('totalPrice')
+        )
+
+        # Total purchase cost for the custom date range
+        total_purchase_cost = Purchase.objects.filter(create_at__range=[start_date, end_date]).aggregate(
+            total_cost=Sum('productname__purchase_price')
+        )['total_cost'] or 0
+
+        # Total sales amount for the custom date range
+        total_sales_amount = total_sales['total_amount'] or 0
+
+        # Profit calculation
+        profit = total_sales_amount - total_purchase_cost
+
+        # Add the data to context
+        context.update({
+            'total_purchase': total_purchase,
+            'total_sales': total_sales,
+            'profit': profit,
+            'start_date': start_date,
+            'end_date': end_date
+        })
+
+        return context

@@ -1,0 +1,73 @@
+{% extends "../navbar.html" %} {% block content %}
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8">
+      <div class="card">
+        <div class="card-header text-center bg-primary text-white">
+          <h3>Receipt</h3>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h5>Invoice #{{ order.id }}</h5>
+              <p><strong>Date:</strong> {{ order.create_at }}</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+              <h5>Supplier: {{ order.suppliername.name }}</h5>
+              <p><strong>Product:</strong> {{ order.productname.name }}</p>
+            </div>
+          </div>
+
+          <!-- Table displaying the order details -->
+          <table class="table table-striped table-bordered mt-4">
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th class="text-end">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Total Amount</td>
+                <td class="text-end">${{ order.totalAmount|floatformat:2 }}</td>
+              </tr>
+              <tr>
+                <td>Discount</td>
+                <td class="text-end">${{ order.discount|floatformat:2 }}</td>
+              </tr>
+              <tr>
+                <td>Paid Amount</td>
+                <td class="text-end">${{ order.paidAmount|floatformat:2 }}</td>
+              </tr>
+              <tr>
+                <td>Due Amount</td>
+                <td class="text-end">${{ order.dueAmount|floatformat:2 }}</td>
+              </tr>
+              <tr>
+                <td>Quantity</td>
+                <td class="text-end">{{ order.quantity }}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Payment status -->
+          <div class="alert alert-info mt-4">
+            <strong>Status:</strong>
+            {% if order.dueAmount == 0 %} Paid in Full {% else %} Pending
+            Payment of ${{ order.dueAmount|floatformat:2 }} {% endif %}
+          </div>
+
+          <!-- Footer -->
+          <div class="mt-4 text-center">
+            <p class="text-muted">Thank you for your business!</p>
+            <button class="btn btn-primary" onclick="window.print();">
+              Print Receipt
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
