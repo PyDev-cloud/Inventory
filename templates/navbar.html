@@ -71,12 +71,11 @@
       <nav class="navbar navbar-expand-sm navbar-default">
         <div id="main-menu" class="main-menu collapse navbar-collapse">
           <ul class="nav navbar-nav">
-            <li class="active">
+            <li class="active mt-4">
               <a href="index.html"
                 ><i class="menu-icon fa fa-laptop"></i>Dashboard
               </a>
             </li>
-            <li class="menu-title">UI elements</li>
             <!-- /.menu-title -->
             <li class="menu-item-has-children dropdown">
               <a
@@ -86,54 +85,71 @@
                 aria-haspopup="true"
                 aria-expanded="false"
               >
-                <i class="menu-icon fa fa-cogs"></i>Category</a
+                <i class="menu-icon fa fa-cogs"></i>Product</a
               >
               <ul class="sub-menu children dropdown-menu">
                 <li>
                   <i class="fa fa-puzzle-piece"></i
-                  ><a href="{% url "categorylist" %}">category List</a>
+                  ><a href="{% url "categorylist" %}">Category</a>
                 </li>
-                
-              </ul>
-            </li>
-            <li class="menu-item-has-children dropdown">
-              <a
-                href="#"
-                class="dropdown-toggle"
-                data-toggle="dropdown"
-                aria-haspopup="true"
-                aria-expanded="false"
-              >
-                <i class="menu-icon fa fa-table"></i>SubCategory</a
-              >
-              <ul class="sub-menu children dropdown-menu">
                 <li>
-                  <i class="fa fa-table"></i
-                  ><a href="{% url "subcategorylist" %}">SubCategory List</a>
+                  <i class="fa fa-puzzle-piece"></i
+                  ><a href="{% url "subcategorylist" %}">Subcategory</a>
                 </li>
-                
-              </ul>
-            </li>
-            <li class="menu-item-has-children dropdown">
-              <a
-                href="#"
-                class="dropdown-toggle"
-                data-toggle="dropdown"
-                aria-haspopup="true"
-                aria-expanded="false"
-              >
-                <i class="menu-icon fa fa-th"></i>Product</a
-              >
-              <ul class="sub-menu children dropdown-menu">
                 <li>
-                  <i class="menu-icon fa fa-th"></i
+                  <i class="fa fa-puzzle-piece"></i
                   ><a href="{% url "productlist" %}">Product List</a>
                 </li>
                 
               </ul>
             </li>
+            <li class="menu-item-has-children dropdown">
+              <a
+                href="#"
+                class="dropdown-toggle"
+                data-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false"
+              >
+                <i class="menu-icon fa fa-table"></i>Purchase</a
+              >
+              <ul class="sub-menu children dropdown-menu">
+                
+                <li>
+                  <i class="fa fa-table"></i
+                  ><a href="{% url "SupplierList" %}">Supplier</a>
+                </li>
+                <li>
+                  <i class="fa fa-table"></i
+                  ><a href="{% url "purchaseList" %}">Purchase List</a>
+                </li>
+                
+              </ul>
+            </li>
+            <li class="menu-item-has-children dropdown">
+              <a
+                href="#"
+                class="dropdown-toggle"
+                data-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false"
+              >
+                <i class="menu-icon fa fa-th"></i>Sells</a
+              >
+              <ul class="sub-menu children dropdown-menu">
+                <li>
+                  <i class="menu-icon fa fa-th"></i
+                  ><a href="{% url "customerlist" %}">Customer</a>
+                </li>
+                <li>
+                  <i class="menu-icon fa fa-th"></i
+                  ><a href="{% url "customerlist" %}">Sell List</a>
+                </li>
+                
+              </ul>
+            </li>
 
-            <li class="menu-title">Icons</li>
+            <li class="menu-title">STOCK</li>
             <!-- /.menu-title -->
 
             <li class="menu-item-has-children dropdown">
@@ -144,54 +160,20 @@
                 aria-haspopup="true"
                 aria-expanded="false"
               >
-                <i class="menu-icon fa fa-tasks"></i>Supplier</a
+                <i class="menu-icon fa fa-tasks"></i>Stock</a
               >
               <ul class="sub-menu children dropdown-menu">
                 <li>
                   <i class="menu-icon fa fa-fort-awesome"></i
-                  ><a href="{% url "SupplierList" %}">Supplier List</a>
+                  ><a href="{% url "stocklist" %}">Stock List</a>
                 </li>
                 
               </ul>
             </li>
             
-            <li class="menu-item-has-children dropdown">
-              <a
-                href="#"
-                class="dropdown-toggle"
-                data-toggle="dropdown"
-                aria-haspopup="true"
-                aria-expanded="false"
-              >
-                <i class="menu-icon fa fa-bar-chart"></i>Customer </a
-              >
-              <ul class="sub-menu children dropdown-menu">
-                <li>
-                  <i class="menu-icon fa fa-line-chart"></i
-                  ><a href="{% url "customerlist" %}">Customer List</a>
-                </li>
-                
-              </ul>
-            </li>
+            
 
-            <li class="menu-item-has-children dropdown">
-              <a
-                href=""
-                class="dropdown-toggle"
-                data-toggle="dropdown"
-                aria-haspopup="true"
-                aria-expanded="false"
-              >
-                <i class="menu-icon fa fa-area-chart"></i>Purchase</a
-              >
-              <ul class="sub-menu children dropdown-menu">
-                <li>
-                  <i class="menu-icon fa fa-map-o"></i
-                  ><a href="{% url "purchaseList" %}">Purchase List</a>
-                </li>
-                
-              </ul>
-            </li>
+            
             <li class="menu-title">Extras</li>
             <!-- /.menu-title -->
             <li class="menu-item-has-children dropdown">
@@ -232,7 +214,7 @@
         <div class="top-left">
           <div class="navbar-header">
             <a class="navbar-brand" href="./"
-              ><img src="{% static "Images/logo.png" %}" alt="Logo"
+              ><img src="{% static "Images/DUIBD.png" %}" alt="Logo"
             /></a>
             <a class="navbar-brand hidden" href="./"
               ><img src="{% static "Images/logo2.png" %}" alt="Logo"
@@ -376,7 +358,7 @@
                   ><i class="fa fa -cog"></i>Settings</a
                 >
 
-                <a class="nav-link" href="#"
+                <a class="nav-link" href="{% url "logout" %}"
                   ><i class="fa fa-power -off"></i>Logout</a
                 >
               </div>

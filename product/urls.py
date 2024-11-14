@@ -22,16 +22,22 @@ urlpatterns = [
     path('customer/',CustomerCreate.as_view(),name='customer'),
     path('customerlist/',Customerlist.as_view(),name='customerlist'),
     path('customerUpdate/<int:pk>/edit/',CustomerUpdateView.as_view(),name="customerupdate"),
+    
 
 
     path('purchase/',PurchaseCreate.as_view(),name="purchase"),
+    path('purchase/create/<int:product_id>/', PurchaseCreate.as_view(), name='purchase_create'),
     path('purchase/receipt/<int:purchase_id>/', PurchaseReceiptView.as_view(), name="purchase_receipt"),  # Show a specific receipt
-
     path("purchaseList/",PurchaseListView.as_view(),name="purchaseList"),
 
 
 
     path('sale/create/', SellesCreateView.as_view(), name='create_sell'),  # URL for creating a new sale
+
+
+    path('StockList/', StockView.as_view(), name='stocklist'),
+    path('export/pdf/', StockView.as_view(), name='export_stock_pdf'),
+    path('export/excel/', StockView.as_view(), name='export_stock_excel'),
 
 
     path('daily/', DailyReportView.as_view(), name='daily_report'),

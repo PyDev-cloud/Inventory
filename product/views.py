@@ -1,3 +1,7 @@
+from django.core.paginator import Paginator, EmptyPage, Page
+import openpyxl
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 from django.http import HttpResponse
 from django.db.models import Sum
 from django.utils import timezone
@@ -247,12 +251,43 @@ class PurchaseCreate(CreateView):
     template_name = 'purchase/Purchasecreate.html'
     success_url = reverse_lazy('purchaseList')  # Redirect to the order list view after successful creation
 
+    def get_context_data(self, **kwargs):
+        """
+        Pass the product data to the context if the product_id is passed in the URL.
+        """
+        context = super().get_context_data(**kwargs)
+        product_id = self.kwargs.get('product_id')  # Get the product_id from the URL
+        if product_id:
+            # Make sure the product exists and pass it to the context
+            product_instance = get_object_or_404(product, id=product_id)
+            context['product'] = product_instance
+        return context
+
     def form_valid(self, form):
+        """
+        Override the form_valid method to include the Product when saving the Purchase.
+        """
+        product_id = self.kwargs.get('product_id')
+        
+        if product_id:
+            try:
+                # Get the product by its ID and ensure we don't have name collision
+                product_instance = product.objects.get(id=product_id)
+                form.instance.product = product_instance  # Associate the product with the purchase
+            except product.DoesNotExist:
+                # If the product doesn't exist, add an error and return the invalid form
+                form.add_error(None, "Product does not exist.")
+                return self.form_invalid(form)
+        
         # Save the purchase object to the database
         self.object = form.save()
 
         # Redirect to the purchase receipt page for the created purchase
         return redirect('purchase_receipt', purchase_id=self.object.id)
+
+    def form_invalid(self, form):
+        # If the form is invalid, return to the form page with the errors
+        return super().form_invalid(form)
     
 
 class PurchaseListView(ListView):
@@ -482,3 +517,144 @@ class CustomDateReportView(TemplateView):
         })
 
         return context
+    
+
+
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from django.core.paginator import Paginator
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+import openpyxl
+
+class StockView(TemplateView):
+    template_name = "Stock/Stock.html"
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Get the filter parameters from the request (if any)
+        product_name = self.request.GET.get('product_name', '')
+        category = self.request.GET.get('category', '')
+        min_quantity = self.request.GET.get('min_quantity', '')
+        max_quantity = self.request.GET.get('max_quantity', '')
+
+        # Build the filter conditions dynamically
+        stock_queryset = Stock.objects.all()
+
+        if product_name:
+            stock_queryset = stock_queryset.filter(product__name__icontains=product_name)
+        
+        if category:
+            stock_queryset = stock_queryset.filter(product__category__name__icontains=category)
+
+        if min_quantity:
+            stock_queryset = stock_queryset.filter(quantity__gte=min_quantity)
+
+        if max_quantity:
+            stock_queryset = stock_queryset.filter(quantity__lte=max_quantity)
+
+        # Pagination
+        paginator = Paginator(stock_queryset, 10)  # Show 10 items per page
+        page = self.request.GET.get('page')
+        stock_page = paginator.get_page(page)
+
+        context['stock'] = stock_page
+        context['paginator'] = paginator
+
+        return context
+
+    def export_stock_pdf(self, request):
+        # Create the HTTP response with content type set to PDF
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'inline; filename="stock_report.pdf"'
+
+        # Create a PDF canvas
+        c = canvas.Canvas(response, pagesize=letter)
+        c.drawString(100, 750, "Stock Report")
+
+        # Get the filtered queryset based on the filters passed in GET parameters
+        product_name = self.request.GET.get('product_name', '')
+        category = self.request.GET.get('category', '')
+        min_quantity = self.request.GET.get('min_quantity', '')
+        max_quantity = self.request.GET.get('max_quantity', '')
+
+        stock_queryset = Stock.objects.all()
+
+        if product_name:
+            stock_queryset = stock_queryset.filter(product__name__icontains=product_name)
+
+        if category:
+            stock_queryset = stock_queryset.filter(product__category__name__icontains=category)
+
+        if min_quantity:
+            stock_queryset = stock_queryset.filter(quantity__gte=min_quantity)
+
+        if max_quantity:
+            stock_queryset = stock_queryset.filter(quantity__lte=max_quantity)
+
+        # Write the stock data to the PDF
+        y_position = 730
+        for stock in stock_queryset:
+            c.drawString(100, y_position, f"{stock.product.name} - {stock.quantity} in stock")
+            y_position -= 20  # Move down the page for the next line
+
+        # Save the PDF
+        c.showPage()
+        c.save()
+
+        return response
+
+    def export_stock_excel(self, request):
+        # Create a new workbook and sheet
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Stock Report"
+
+        # Write headers
+        ws.append(['Product Name', 'Category', 'Quantity', 'Created Date'])
+
+        # Get the filtered queryset from the request parameters
+        product_name = self.request.GET.get('product_name', '')
+        category = self.request.GET.get('category', '')
+        min_quantity = self.request.GET.get('min_quantity', '')
+        max_quantity = self.request.GET.get('max_quantity', '')
+
+        product_name = "Test"
+        category = "Category1"
+        min_quantity = 5
+        max_quantity = 50
+        # Build the queryset based on filters
+        stock_queryset = Stock.objects.all()
+
+        if product_name:
+            stock_queryset = stock_queryset.filter(product__name__icontains=product_name)
+
+        if category:
+            stock_queryset = stock_queryset.filter(product__category__name__icontains=category)
+
+        if min_quantity:
+            stock_queryset = stock_queryset.filter(quantity__gte=int(min_quantity))  # Ensure it's an integer
+
+        if max_quantity:
+            stock_queryset = stock_queryset.filter(quantity__lte=int(max_quantity))  # Ensure it's an integer
+
+        # Write data to the Excel sheet
+        for stock in stock_queryset:
+            print(stock.product.name, stock.quantity)
+            # Format the created_at to string in case it's a datetime object
+          
+            created_at = stock.created_at.strftime('%Y-%m-%d %H:%M:%S') if stock.created_at else ''
+            ws.append([stock.product.name, stock.product.category.name, stock.quantity, created_at])
+
+        # Create the HTTP response with content type set to Excel
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="stock_report.xlsx"'
+
+        # Save the workbook to the response
+        wb.save(response)
+
+        return response
+
+
