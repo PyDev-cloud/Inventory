@@ -30,6 +30,60 @@ class CategoryView(CreateView):
     def form_invalid(self, form):
         messages.error(self.request, "Please correct the errors below.")  # Error message
         return super().form_invalid(form)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Adding the file upload form to the context
+        context['upload_form'] = ExcelUploadForm()
+        return context
+
+    def post(self, request, *args, **kwargs):
+        # Check if the request is for the file upload
+        if 'excel_file' in request.FILES:
+            return self.handle_excel_upload(request)
+        
+        # Otherwise, proceed with the default form submission
+        return super().post(request, *args, **kwargs)
+    
+    
+    def handle_excel_upload(self, request):
+        # Handle Excel file upload and import categories
+        excel_file = request.FILES['excel_file']
+        
+        # Open the Excel file using openpyxl
+        try:
+            wb = openpyxl.load_workbook(excel_file)
+            sheet = wb.active  # You can specify sheet name if needed
+            
+            # Iterate over each row in the Excel sheet and save data to the database
+            for row in sheet.iter_rows(min_row=2, values_only=True):  # Skips the first row (header)
+                category_name = row[0]  # Assuming the category name is in the first column
+                
+                if category_name:
+                    # Create a new category object
+                    category.objects.create(name=category_name)
+                    
+            #messages.success(request, "Categories have been successfully imported.")
+            return redirect('categorylist')  # Redirect to the category list page
+
+        except Exception as e:
+            messages.error(request, f"Error processing the file: {str(e)}")
+            return redirect('category_upload')  # Redirect to the upload page if there's an error
+    
+    
+    def download_sample_excel(self):
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.append(['Category Name'])
+        ws.append(['Example Category 1'])
+        ws.append(['Example Category 2'])
+        ws.append(['Example Category 3'])
+
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="sample_categories.xlsx"'
+        wb.save(response)
+        return response
+
 #category View 
 
 class categoryViewlist(ListView):
@@ -520,25 +574,17 @@ class CustomDateReportView(TemplateView):
     
 
 
-from django.http import HttpResponse
-from django.template.loader import render_to_string
-from django.utils.html import strip_tags
-from django.core.paginator import Paginator
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
-import openpyxl
 
-class StockView(TemplateView):
+
+class StockView(View):
     template_name = "Stock/Stock.html"
     
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
+    def get(self, request, *args, **kwargs):
         # Get the filter parameters from the request (if any)
-        product_name = self.request.GET.get('product_name', '')
-        category = self.request.GET.get('category', '')
-        min_quantity = self.request.GET.get('min_quantity', '')
-        max_quantity = self.request.GET.get('max_quantity', '')
+        product_name = request.GET.get('product_name', '')
+        category = request.GET.get('category', '')
+        min_quantity = request.GET.get('min_quantity', '')
+        max_quantity = request.GET.get('max_quantity', '')
 
         # Build the filter conditions dynamically
         stock_queryset = Stock.objects.all()
@@ -557,15 +603,20 @@ class StockView(TemplateView):
 
         # Pagination
         paginator = Paginator(stock_queryset, 10)  # Show 10 items per page
-        page = self.request.GET.get('page')
+        page = request.GET.get('page')
         stock_page = paginator.get_page(page)
 
-        context['stock'] = stock_page
-        context['paginator'] = paginator
+        context = {
+            'stock': stock_page,
+            'paginator': paginator,
+        }
 
-        return context
+        return render(request, self.template_name, context)
 
-    def export_stock_pdf(self, request):
+
+
+    
+def export_stock_pdf(request):
         # Create the HTTP response with content type set to PDF
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = 'inline; filename="stock_report.pdf"'
@@ -575,10 +626,10 @@ class StockView(TemplateView):
         c.drawString(100, 750, "Stock Report")
 
         # Get the filtered queryset based on the filters passed in GET parameters
-        product_name = self.request.GET.get('product_name', '')
-        category = self.request.GET.get('category', '')
-        min_quantity = self.request.GET.get('min_quantity', '')
-        max_quantity = self.request.GET.get('max_quantity', '')
+        product_name = request.GET.get('product_name', '')
+        category = request.GET.get('category', '')
+        min_quantity =request.GET.get('min_quantity', '')
+        max_quantity = request.GET.get('max_quantity', '')
 
         stock_queryset = Stock.objects.all()
 
@@ -606,8 +657,9 @@ class StockView(TemplateView):
 
         return response
 
-    def export_stock_excel(self, request):
+def export_stock_excel(request):
         # Create a new workbook and sheet
+        
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "Stock Report"
@@ -616,15 +668,12 @@ class StockView(TemplateView):
         ws.append(['Product Name', 'Category', 'Quantity', 'Created Date'])
 
         # Get the filtered queryset from the request parameters
-        product_name = self.request.GET.get('product_name', '')
-        category = self.request.GET.get('category', '')
-        min_quantity = self.request.GET.get('min_quantity', '')
-        max_quantity = self.request.GET.get('max_quantity', '')
+        product_name =request.GET.get('product_name', '')
+        category = request.GET.get('category', '')
+        min_quantity =request.GET.get('min_quantity', '')
+        max_quantity =request.GET.get('max_quantity', '')
 
-        product_name = "Test"
-        category = "Category1"
-        min_quantity = 5
-        max_quantity = 50
+        
         # Build the queryset based on filters
         stock_queryset = Stock.objects.all()
 
@@ -642,7 +691,7 @@ class StockView(TemplateView):
 
         # Write data to the Excel sheet
         for stock in stock_queryset:
-            print(stock.product.name, stock.quantity)
+            
             # Format the created_at to string in case it's a datetime object
           
             created_at = stock.created_at.strftime('%Y-%m-%d %H:%M:%S') if stock.created_at else ''
@@ -656,5 +705,3 @@ class StockView(TemplateView):
         wb.save(response)
 
         return response
-
-

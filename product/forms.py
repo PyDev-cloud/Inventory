@@ -114,3 +114,7 @@ class SellesForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(SellesForm, self).__init__(*args, **kwargs)
+
+
+class ExcelUploadForm(forms.Form):
+    excel_file = forms.FileField(label='Select an Excel file to upload')

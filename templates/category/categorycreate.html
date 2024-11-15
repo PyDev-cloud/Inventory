@@ -1,29 +1,37 @@
-{% extends "../navbar.html" %} {% load static %} {% block content %}
+{% extends "../navbar.html" %} {% load static %} {% block content %} {% if
+messages %}
+<div class="alert-container">
+  {% for message in messages %}
+  <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+  {% endfor %}
+</div>
+
 <div class="d-flex justify-content-center align-items-center vh-100">
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-md-6">
         <h2 class="text-center mb-4">Category Form</h2>
 
-        <!-- Form starts here -->
-        <form method="post">
-          {% csrf_token %}
-
-          <div class="mb-3">
-            <label for="{{ form.name.id_for_label }}" class="form-label"
-              >{{ form.name.label }}</label
-            >
-            {{ form.name }}
-            <!-- Renders the name field with applied Bootstrap classes -->
-          </div>
-
+        <!-- Category creation form -->
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %} {{ form.as_p }}
+          <!-- Category form fields -->
           <button type="submit" class="btn btn-primary btn-lg w-100">
             Submit
+          </button>
+        </form>
+
+        <!-- Excel file upload form -->
+        <h2 class="text-center mt-4">Bulk Category Upload (Excel)</h2>
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %} {{ upload_form.as_p }}
+          <!-- Excel file upload form fields -->
+          <button type="submit" class="btn btn-success btn-lg w-100">
+            Upload Excel
           </button>
         </form>
       </div>
     </div>
   </div>
 </div>
-
 {% endblock %}

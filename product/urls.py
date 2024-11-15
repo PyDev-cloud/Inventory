@@ -22,7 +22,7 @@ urlpatterns = [
     path('customer/',CustomerCreate.as_view(),name='customer'),
     path('customerlist/',Customerlist.as_view(),name='customerlist'),
     path('customerUpdate/<int:pk>/edit/',CustomerUpdateView.as_view(),name="customerupdate"),
-    
+    path('category/sample/excel/', CategoryView.as_view(), name='category_sample_excel'),  # New URL for sample excel download
 
 
     path('purchase/',PurchaseCreate.as_view(),name="purchase"),
@@ -36,8 +36,9 @@ urlpatterns = [
 
 
     path('StockList/', StockView.as_view(), name='stocklist'),
-    path('export/pdf/', StockView.as_view(), name='export_stock_pdf'),
-    path('export/excel/', StockView.as_view(), name='export_stock_excel'),
+    path('export/pdf/', export_stock_pdf, name='export_stock_pdf'),
+    path('export/excel/', export_stock_excel, name='export_stock_excel'),
+    #path("excel/",export_stock_excel,name="export_stock_excl"),
 
 
     path('daily/', DailyReportView.as_view(), name='daily_report'),
