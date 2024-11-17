@@ -1,19 +1,30 @@
 {% extends "../navbar.html" %} {% load static %} {% block content %}
+
 <div class="d-flex justify-content-center align-items-center vh-100">
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-md-6">
-        <h2 class="text-center mb-4">Create Subcategory</h2>
+        <h2 class="text-center mb-4">Create Supplier</h2>
         <form method="post">
           {% csrf_token %} {{ form.as_p }}
           <!-- Render the form fields -->
           <button type="submit" class="btn btn-primary btn-lg w-100">
-            Add Subcategory
+            Add Category
+          </button>
+        </form>
+      </div>
+      <div class="col-md-4">
+        <h2 class="mb-4">Upload (Excel)</h2>
+        <a href="{% url 'Subcategory_excel' %}">Download Sample File</a>
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %} {{ upload_form.as_p }}
+          <!-- Excel file upload form fields -->
+          <button type="submit" class="btn btn-success btn-lg w-100">
+            Upload Excel
           </button>
         </form>
       </div>
     </div>
   </div>
 </div>
-
-{% endblock content %}
+{% endblock %}

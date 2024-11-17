@@ -14,7 +14,7 @@ from datetime import datetime
 from django.views.generic import *
 from .models import *
 from .forms import *
-# Create your views here.
+
 #category Creater View 
 class CategoryView(CreateView):
     model = category
@@ -71,7 +71,7 @@ class CategoryView(CreateView):
             return redirect('category_upload')  # Redirect to the upload page if there's an error
     
     
-    def download_sample_excel(self):
+def download_sample_excel(self):
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.append(['Category Name'])
@@ -84,18 +84,20 @@ class CategoryView(CreateView):
         wb.save(response)
         return response
 
-#category View 
+
 
 class categoryViewlist(ListView):
-        model=category
-        template_name="category/categoryList.html"
+    model = category
+    template_name = "category/categoryList.html"
+    paginate_by = 7
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # If you want to use 'category_list' as a custom context variable, that's fine
+        context['Category'] = context['object_list']  # Rename 'object_list' to 'category_list'
+        return context
         
-        def get_context_data(self, **kwargs):
-            context = super().get_context_data(**kwargs)
-            context["Category"] = self.model.objects.all()
-            return context
-        
-        
+  
 #Category Update View 
 class CategoryUpdateView(UpdateView):
     model = category
@@ -115,17 +117,25 @@ class CategoryUpdateView(UpdateView):
        return obj
        
 
-     
+
+
+
+
+
+
+
+
+
               
 
 #SubCategory View
 class SubcategoryViewlist(ListView):
         model=SubCategory
         template_name="subcategory/SubcategoryList.html"
-        
+        paginate_by=2
         def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
-            context["subcategory"] = self.model.objects.all()
+            context["subcategory"] = context['object_list']
             return context
       
 class SubCategoryView(CreateView):
@@ -141,7 +151,82 @@ class SubCategoryView(CreateView):
     def form_invalid(self, form):
         messages.error(self.request, "Please correct the errors below.")  # Error message
         return super().form_invalid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Adding the file upload form to the context
+        context['upload_form'] = ExcelUploadForm()
+        return context
 
+    def post(self, request, *args, **kwargs):
+    # Check if the request is for the file upload
+        if 'excel_file' in request.FILES:
+            return self.handle_excel_upload(request)
+        
+        # Otherwise, proceed with the default form submission
+        return super().post(request, *args, **kwargs)
+
+    def handle_excel_upload(self, request):
+        # Handle Excel file upload and import categories
+        excel_file = request.FILES['excel_file']
+        
+        try:
+            # Open the Excel file using openpyxl
+            wb = openpyxl.load_workbook(excel_file)
+            sheet = wb.active  # You can specify the sheet name if needed
+            
+            # Iterate over each row in the Excel sheet and save data to the database
+            for row in sheet.iter_rows(min_row=2, values_only=True):  # Skips the first row (header)
+                subcategory_name = row[0]  # Subcategory name is in the first column
+                category_name = row[1]  # Category name is in the second column
+                
+                if subcategory_name and category_name:
+                    # Look up the Category object by name, or create it if it doesn't exist
+                    category_fields = category.objects.filter(name=category_name).first()
+                    
+                    if category_fields:
+                        # Create a new SubCategory object with the ForeignKey to Category
+                        SubCategory.objects.create(name=subcategory_name, category_fields=category_fields)
+                    else:
+                        # If the category doesn't exist, you can handle it as needed (e.g., create a new category or skip)
+                        messages.warning(request, f"Category '{category_name}' not found. Skipping SubCategory '{subcategory_name}'.")
+                        
+            messages.success(request, "Subcategories have been successfully imported.")
+            return redirect('subcategory_list')  # Redirect to the subcategory list page after successful upload
+
+        except Exception as e:
+            messages.error(request, f"Error processing the file: {str(e)}")
+            return redirect('subcategory_upload')  # Redirect to the upload page if there's an error
+
+def download_sample_excel_subcategory(request):
+    # Create a new workbook and select the active worksheet
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    
+    # Add the header row to the Excel file
+    ws.append(['SubCategory Name', 'Category Name'])
+
+    # Fetch all SubCategory objects and iterate over them
+    subcategories = SubCategory.objects.all()
+
+    # Add data rows for each SubCategory
+    for subcategory in subcategories:
+        # Get the subcategory name and its related category name
+        subcategory_name = subcategory.name
+        category_name = subcategory.category.name  # Access the related Category's name
+        
+        # Append the row to the Excel sheet
+        ws.append([subcategory_name, category_name])
+
+    # Set the response to download the file as an Excel spreadsheet
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="subcategories_with_categories.xlsx"'
+
+    # Save the workbook into the response
+    wb.save(response)
+
+    return response
 #SubCategory Update View
 class SubCategoryUpdateView(UpdateView):
     model = SubCategory

@@ -7,11 +7,14 @@ urlpatterns = [
     path('category/',CategoryView.as_view(),name='category'),
     path('categoryList/',categoryViewlist.as_view(),name="categorylist"),
     path('category/<int:pk>/edit/',CategoryUpdateView.as_view(),name="categoryupdate"),
+    path('category/sample/excel/', download_sample_excel, name='category_sample_excel'),  
+
 
     path('subcategory/',SubCategoryView.as_view(),name='subcategory'),
     path('subcategoryList/',SubcategoryViewlist.as_view(),name="subcategorylist"),
     path('subcategory/<int:pk>/edit/',SubCategoryUpdateView.as_view(),name="subcategoryupdate"),
-
+    path('Download/Subcategory/excel/data',download_sample_excel_subcategory,name="Subcategory_excel"),
+    
     path('product/', ProductView.as_view(), name='product'),
     path('productList/',Productlist.as_view(),name="productlist"),
     path('productUpdate/<int:pk>/edit/',ProductUpdateView.as_view(),name="productupdate"),
@@ -22,8 +25,7 @@ urlpatterns = [
     path('customer/',CustomerCreate.as_view(),name='customer'),
     path('customerlist/',Customerlist.as_view(),name='customerlist'),
     path('customerUpdate/<int:pk>/edit/',CustomerUpdateView.as_view(),name="customerupdate"),
-    path('category/sample/excel/', CategoryView.as_view(), name='category_sample_excel'),  # New URL for sample excel download
-
+    
 
     path('purchase/',PurchaseCreate.as_view(),name="purchase"),
     path('purchase/create/<int:product_id>/', PurchaseCreate.as_view(), name='purchase_create'),
