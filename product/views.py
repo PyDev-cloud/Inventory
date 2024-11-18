@@ -17,7 +17,7 @@ from .forms import *
 
 #category Creater View 
 class CategoryView(CreateView):
-    model = category
+    model = Category
     form_class = CategoryForm
     template_name = "category/categorycreate.html"  # Corrected template path
     success_url = reverse_lazy('categorylist')  # Redirect after successful creation
@@ -30,64 +30,11 @@ class CategoryView(CreateView):
     def form_invalid(self, form):
         messages.error(self.request, "Please correct the errors below.")  # Error message
         return super().form_invalid(form)
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        
-        # Adding the file upload form to the context
-        context['upload_form'] = ExcelUploadForm()
-        return context
-
-    def post(self, request, *args, **kwargs):
-        # Check if the request is for the file upload
-        if 'excel_file' in request.FILES:
-            return self.handle_excel_upload(request)
-        
-        # Otherwise, proceed with the default form submission
-        return super().post(request, *args, **kwargs)
     
-    
-    def handle_excel_upload(self, request):
-        # Handle Excel file upload and import categories
-        excel_file = request.FILES['excel_file']
-        
-        # Open the Excel file using openpyxl
-        try:
-            wb = openpyxl.load_workbook(excel_file)
-            sheet = wb.active  # You can specify sheet name if needed
-            
-            # Iterate over each row in the Excel sheet and save data to the database
-            for row in sheet.iter_rows(min_row=2, values_only=True):  # Skips the first row (header)
-                category_name = row[0]  # Assuming the category name is in the first column
-                
-                if category_name:
-                    # Create a new category object
-                    category.objects.create(name=category_name)
-                    
-            #messages.success(request, "Categories have been successfully imported.")
-            return redirect('categorylist')  # Redirect to the category list page
-
-        except Exception as e:
-            messages.error(request, f"Error processing the file: {str(e)}")
-            return redirect('category_upload')  # Redirect to the upload page if there's an error
-    
-    
-def download_sample_excel(self):
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.append(['Category Name'])
-        ws.append(['Example Category 1'])
-        ws.append(['Example Category 2'])
-        ws.append(['Example Category 3'])
-
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = 'attachment; filename="sample_categories.xlsx"'
-        wb.save(response)
-        return response
-
 
 
 class categoryViewlist(ListView):
-    model = category
+    model = Category
     template_name = "category/categoryList.html"
     paginate_by = 7
 
@@ -97,10 +44,9 @@ class categoryViewlist(ListView):
         context['Category'] = context['object_list']  # Rename 'object_list' to 'category_list'
         return context
         
-  
 #Category Update View 
 class CategoryUpdateView(UpdateView):
-    model = category
+    model = Category
     form_class = CategoryForm  # The form used for editing
     template_name = 'category/categoryUpdate.html'  # The template to render the form
     context_object_name = 'category'  # The context variable used in the template
@@ -109,10 +55,10 @@ class CategoryUpdateView(UpdateView):
     success_url = reverse_lazy('categorylist')
 
     def get_object(self, queryset=None):
-       queryset = category.objects.filter(pk=self.kwargs['pk'])
+       queryset = Category.objects.filter(pk=self.kwargs['pk'])
        try:
             obj=queryset.get()
-       except category.DoesNotExixt:
+       except Category.DoesNotExixt:
             raise Http404("category not found or inactive")
        return obj
        
@@ -145,88 +91,14 @@ class SubCategoryView(CreateView):
     #success_url = reverse_lazy('success')  # Redirect after successful creation
     def form_valid(self, form):
         form.save()
-        messages.success(self.request, "Category created successfully!")  # Success message
+        messages.success(self.request, "SubCategory created successfully!")  # Success message
         return super().form_valid(form)
-    
+
     def form_invalid(self, form):
         messages.error(self.request, "Please correct the errors below.")  # Error message
         return super().form_invalid(form)
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        
-        # Adding the file upload form to the context
-        context['upload_form'] = ExcelUploadForm()
-        return context
 
-    def post(self, request, *args, **kwargs):
-    # Check if the request is for the file upload
-        if 'excel_file' in request.FILES:
-            return self.handle_excel_upload(request)
-        
-        # Otherwise, proceed with the default form submission
-        return super().post(request, *args, **kwargs)
-
-    def handle_excel_upload(self, request):
-        # Handle Excel file upload and import categories
-        excel_file = request.FILES['excel_file']
-        
-        try:
-            # Open the Excel file using openpyxl
-            wb = openpyxl.load_workbook(excel_file)
-            sheet = wb.active  # You can specify the sheet name if needed
-            
-            # Iterate over each row in the Excel sheet and save data to the database
-            for row in sheet.iter_rows(min_row=2, values_only=True):  # Skips the first row (header)
-                subcategory_name = row[0]  # Subcategory name is in the first column
-                category_name = row[1]  # Category name is in the second column
-                
-                if subcategory_name and category_name:
-                    # Look up the Category object by name, or create it if it doesn't exist
-                    category_fields = category.objects.filter(name=category_name).first()
-                    
-                    if category_fields:
-                        # Create a new SubCategory object with the ForeignKey to Category
-                        SubCategory.objects.create(name=subcategory_name, category_fields=category_fields)
-                    else:
-                        # If the category doesn't exist, you can handle it as needed (e.g., create a new category or skip)
-                        messages.warning(request, f"Category '{category_name}' not found. Skipping SubCategory '{subcategory_name}'.")
-                        
-            messages.success(request, "Subcategories have been successfully imported.")
-            return redirect('subcategory_list')  # Redirect to the subcategory list page after successful upload
-
-        except Exception as e:
-            messages.error(request, f"Error processing the file: {str(e)}")
-            return redirect('subcategory_upload')  # Redirect to the upload page if there's an error
-
-def download_sample_excel_subcategory(request):
-    # Create a new workbook and select the active worksheet
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    
-    # Add the header row to the Excel file
-    ws.append(['SubCategory Name', 'Category Name'])
-
-    # Fetch all SubCategory objects and iterate over them
-    subcategories = SubCategory.objects.all()
-
-    # Add data rows for each SubCategory
-    for subcategory in subcategories:
-        # Get the subcategory name and its related category name
-        subcategory_name = subcategory.name
-        category_name = subcategory.category.name  # Access the related Category's name
-        
-        # Append the row to the Excel sheet
-        ws.append([subcategory_name, category_name])
-
-    # Set the response to download the file as an Excel spreadsheet
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="subcategories_with_categories.xlsx"'
-
-    # Save the workbook into the response
-    wb.save(response)
-
-    return response
+   
 #SubCategory Update View
 class SubCategoryUpdateView(UpdateView):
     model = SubCategory
@@ -248,7 +120,7 @@ class SubCategoryUpdateView(UpdateView):
 
 #product List View 
 class Productlist(ListView):
-        model=product
+        model=Product
         template_name="product/productList.html"
         
         def get_context_data(self, **kwargs):
@@ -264,7 +136,7 @@ class ProductView(View):
         form = self.form_class()
         context = {
             "form": form,
-            "categories": category.objects.all(),  # Call .all() to get the queryset
+            "categories": Category.objects.all(),  # Call .all() to get the queryset
             "subcategories": SubCategory.objects.all(),  # Call .all() to get the queryset
         }
         return render(request, self.template_name, context)
@@ -280,7 +152,7 @@ class ProductView(View):
 
         context = {
             "form": form,
-            "categories": category.objects.all(),
+            "categories": Category.objects.all(),
             "subcategories": SubCategory.objects.all(),
         }
         return render(request, self.template_name, context)  # Render the form with errors
@@ -288,7 +160,7 @@ class ProductView(View):
 
 
 class ProductUpdateView(UpdateView):
-    model = product
+    model = Product
     form_class = ProductForm  # The form used for editing
     template_name = 'product/productupdate.html'  # The template to render the form
     context_object_name = 'product'  # The context variable used in the template
@@ -297,10 +169,10 @@ class ProductUpdateView(UpdateView):
     success_url = reverse_lazy('productlist')
 
     def get_object(self, queryset=None):
-       queryset = product.objects.filter(pk=self.kwargs['pk'])
+       queryset = Product.objects.filter(pk=self.kwargs['pk'])
        try:
             obj=queryset.get()
-       except product.DoesNotExixt:
+       except Product.DoesNotExixt:
             raise Http404("category not found or inactive")
        return obj
 
@@ -398,7 +270,7 @@ class PurchaseCreate(CreateView):
         product_id = self.kwargs.get('product_id')  # Get the product_id from the URL
         if product_id:
             # Make sure the product exists and pass it to the context
-            product_instance = get_object_or_404(product, id=product_id)
+            product_instance = get_object_or_404(Product, id=product_id)
             context['product'] = product_instance
         return context
 
@@ -411,9 +283,9 @@ class PurchaseCreate(CreateView):
         if product_id:
             try:
                 # Get the product by its ID and ensure we don't have name collision
-                product_instance = product.objects.get(id=product_id)
+                product_instance = Product.objects.get(id=product_id)
                 form.instance.product = product_instance  # Associate the product with the purchase
-            except product.DoesNotExist:
+            except Product.DoesNotExist:
                 # If the product doesn't exist, add an error and return the invalid form
                 form.add_error(None, "Product does not exist.")
                 return self.form_invalid(form)

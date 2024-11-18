@@ -15,7 +15,7 @@
       </div>
       <div class="col-md-4">
         <h2 class="mb-4">Upload (Excel)</h2>
-        <a href="{% url 'Subcategory_excel' %}">Download Sample File</a>
+        <a href="#">Download Sample File</a>
         <form method="post" enctype="multipart/form-data">
           {% csrf_token %} {{ upload_form.as_p }}
           <!-- Excel file upload form fields -->

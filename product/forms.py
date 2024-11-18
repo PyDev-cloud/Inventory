@@ -3,7 +3,7 @@ from .models import *  # Make sure to import your Product model
 
 class ProductForm(forms.ModelForm):
     class Meta:
-        model = product  # Use 'model' instead of 'models'
+        model = Product  # Use 'model' instead of 'models'
         fields = [
             'name', 'thumbnail_image', 'quantity', 'purchase_price', 
             'sale_price', 'category', 'sub_category', 
@@ -37,7 +37,7 @@ class SubCategoryForm(forms.ModelForm):
 
 class CategoryForm(forms.ModelForm):
     class Meta:
-        model=category
+        model=Category
         fields=['name']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name'})

@@ -7,13 +7,13 @@ urlpatterns = [
     path('category/',CategoryView.as_view(),name='category'),
     path('categoryList/',categoryViewlist.as_view(),name="categorylist"),
     path('category/<int:pk>/edit/',CategoryUpdateView.as_view(),name="categoryupdate"),
-    path('category/sample/excel/', download_sample_excel, name='category_sample_excel'),  
+     
 
 
     path('subcategory/',SubCategoryView.as_view(),name='subcategory'),
     path('subcategoryList/',SubcategoryViewlist.as_view(),name="subcategorylist"),
     path('subcategory/<int:pk>/edit/',SubCategoryUpdateView.as_view(),name="subcategoryupdate"),
-    path('Download/Subcategory/excel/data',download_sample_excel_subcategory,name="Subcategory_excel"),
+  
     
     path('product/', ProductView.as_view(), name='product'),
     path('productList/',Productlist.as_view(),name="productlist"),
