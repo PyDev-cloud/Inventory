@@ -33,6 +33,8 @@ class SubCategoryForm(forms.ModelForm):
             'name': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name'}),
             'category': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name'})
         }
+        name = forms.CharField(required=False)  # Make 'name' optional
+        category = forms.CharField(required=False)  # Make 'category' optional
         
 
 class CategoryForm(forms.ModelForm):
@@ -116,5 +118,5 @@ class SellesForm(forms.ModelForm):
         super(SellesForm, self).__init__(*args, **kwargs)
 
 
-class ExcelUploadForm(forms.Form):
-    excel_file = forms.FileField(label='Select an Excel file to upload')
+class FileUploadForm(forms.Form):
+    file = forms.FileField()

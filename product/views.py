@@ -1,8 +1,9 @@
+import pandas as pd
 from django.core.paginator import Paginator, EmptyPage, Page
 import openpyxl
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.db.models import Sum
 from django.utils import timezone
 from datetime import timedelta
@@ -16,21 +17,100 @@ from .models import *
 from .forms import *
 
 #category Creater View 
-class CategoryView(CreateView):
+class CategoryAndFileUploadView(FormView):
     model = Category
     form_class = CategoryForm
-    template_name = "category/categorycreate.html"  # Corrected template path
-    success_url = reverse_lazy('categorylist')  # Redirect after successful creation
+    template_name = "category/categorycreate.html"
+    success_url = reverse_lazy('categorylist')  # Redirect after successful category creation
 
-    def form_valid(self, form):
-        form.save()
-        messages.success(self.request, "Category created successfully!")  # Success message
-        return super().form_valid(form)
+    def get(self, request, *args, **kwargs):
+        # Handle GET request: Render both the category form and file upload form
+        file_form = FileUploadForm()
+        category_form = CategoryForm()
+        return render(request, self.template_name, {
+            "file_form": file_form,
+            "category_form": category_form
+        })
 
-    def form_invalid(self, form):
-        messages.error(self.request, "Please correct the errors below.")  # Error message
-        return super().form_invalid(form)
+    def post(self, request, *args, **kwargs):
+        """
+        Handles POST request:
+        - If file is uploaded, process the file (CSV/Excel)
+        - If manual form is submitted, create a category
+        """
+        file_form = FileUploadForm(request.POST, request.FILES)
+        category_form = CategoryForm(request.POST)
+
+        if 'file' in request.FILES:  # If a file is uploaded
+            if file_form.is_valid():
+                uploaded_file = request.FILES['file']
+                if uploaded_file.name.endswith('.csv'):
+                    self.upload_csv(uploaded_file)
+                    messages.success(request, "CSV file processed successfully!")
+                elif uploaded_file.name.endswith('.xlsx') or uploaded_file.name.endswith('.xls'):
+                    self.upload_excel(uploaded_file)
+                   # messages.success(request, "Excel file processed successfully!")
+                else:
+                    messages.error(request, "Invalid file type. Only CSV and Excel files are allowed.")
+                return redirect(self.success_url)  # Redirect after processing the file
+            else:
+                # If the file form is invalid, render the page with error messages
+                messages.error(request, "Invalid file submission.")
+                return render(request, self.template_name, {
+                    'file_form': file_form,
+                    'category_form': category_form,
+                })
+
+        elif category_form.is_valid():  # If manual category form is submitted
+            category_name = category_form.cleaned_data["name"]
+            category, created_category = Category.objects.get_or_create(name=category_name)
+            if created_category:
+                messages.success(request, f"Category '{category_name}' created successfully!")
+            else:
+                messages.info(request, f"Category '{category_name}' already exists.")
+            return redirect(self.success_url)  # Redirect after category creation
+
+        else:
+            # If neither form is valid, render the page with error messages
+            messages.error(request, "Please correct the errors below.")
+            return render(request, self.template_name, {
+                'file_form': file_form,
+                'category_form': category_form,
+            })
+
+    def upload_csv(self, file):
+        """Process uploaded CSV file and create categories"""
+        df = pd.read_csv(file)
+        for index, row in df.iterrows():
+            category_name = row.get('name', None)
+            if category_name:
+                category, created_category = Category.objects.get_or_create(name=category_name)
+                if created_category:
+                    print(f"Category '{category_name}' created.")
+                else:
+                    print(f"Category '{category_name}' already exists.")
+
+    def upload_excel(self, file):
+        """Process uploaded Excel file and create categories"""
+        df = pd.read_excel(file)
+        for index, row in df.iterrows():
+            category_name = row.get('name', None)
+            if category_name:
+                category, created_category = Category.objects.get_or_create(name=category_name)
+                if created_category:
+                    print(f"Category '{category_name}' created.")
+                else:
+                    print(f"Category '{category_name}' already exists.")
+        print(f"Finished processing {len(df)} rows.")
     
+
+
+
+    
+
+                      
+
+
 
 
 class categoryViewlist(ListView):
@@ -41,7 +121,7 @@ class categoryViewlist(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # If you want to use 'category_list' as a custom context variable, that's fine
-        context['Category'] = context['object_list']  # Rename 'object_list' to 'category_list'
+        context['Category'] = Category.objects.all()  # Rename 'object_list' to 'category_list'
         return context
         
 #Category Update View 
@@ -78,25 +158,149 @@ class CategoryUpdateView(UpdateView):
 class SubcategoryViewlist(ListView):
         model=SubCategory
         template_name="subcategory/SubcategoryList.html"
-        paginate_by=2
+        paginate_by=10
         def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
-            context["subcategory"] = context['object_list']
+            context["subcategory"] = SubCategory.objects.all()
             return context
-      
-class SubCategoryView(CreateView):
-    model=SubCategory
-    form_class=SubCategoryForm
-    template_name="subcategory/Subcategorycreate.html"
-    #success_url = reverse_lazy('success')  # Redirect after successful creation
-    def form_valid(self, form):
-        form.save()
-        messages.success(self.request, "SubCategory created successfully!")  # Success message
-        return super().form_valid(form)
+
+class SubCategoryAndFileUploadView(FormView):
+    # This view will handle both SubCategory form submission and file uploads
+    template_name = 'subcategory/Subcategorycreate.html'
+    # We use both forms (manual form and file upload form)
+    form_class = SubCategoryForm  # Default form for manual SubCategory creation
+    file_form_class = FileUploadForm  # Form for file uploads
+    
+    # Success URL for file upload or form submission
+    success_url = '/subcategoryList/'
+
+    def get(self, request, *args, **kwargs):
+        """
+        Handles GET request. Renders both the file upload form and the manual SubCategory form.
+        """
+        file_form = FileUploadForm()
+        subcategory_form = SubCategoryForm()
+        return render(request, self.template_name, {
+            'file_form': file_form,
+            'subcategory_form': subcategory_form,
+        })
+
+    def post(self, request, *args, **kwargs):
+        """
+        Handles POST request for either file upload or manual SubCategory creation.
+        It checks which form was submitted and processes it accordingly.
+        """
+        file_form = FileUploadForm(request.POST, request.FILES)
+        subcategory_form = SubCategoryForm(request.POST)
+
+        # If the file form was submitted
+        if 'file' in request.FILES:
+            if file_form.is_valid():
+                uploaded_file = request.FILES['file']
+                if uploaded_file.name.endswith('.csv'):
+                    # Process CSV file
+                    self.upload_csv(uploaded_file)
+                    messages.success(request, "CSV file processed successfully!")
+                elif uploaded_file.name.endswith('.xlsx') or uploaded_file.name.endswith('.xls'):
+                    # Process Excel file
+                    self.upload_excel(uploaded_file)
+                    messages.success(request, "Excel file processed successfully!")
+                else:
+                    messages.error(request, "Invalid file type. Only CSV and Excel files are allowed.")
+                return redirect('subcategory_list')  # Redirect after successful file processing
+        elif subcategory_form.is_valid():
+            # If the manual SubCategory form was submitted
+            category_name = subcategory_form.cleaned_data['category']
+            subcategory_name = subcategory_form.cleaned_data['name']
+            category, created_category = Category.objects.get_or_create(name=category_name)
+            
+            if created_category:
+                messages.success(request, f"Category '{category_name}' created.")
+            else:
+                messages.info(request, f"Category '{category_name}' already exists.")
+            
+            SubCategory.objects.create(name=subcategory_name, category=category)
+            messages.success(request, f"SubCategory '{subcategory_name}' created successfully!")
+            return redirect('subcategory_list')  # Redirect after successful form submission
+
+        # If neither form is valid, render the page with error messages
+        return render(request, self.template_name, {
+            'file_form': file_form,
+            'subcategory_form': subcategory_form,
+        })
 
     def form_invalid(self, form):
-        messages.error(self.request, "Please correct the errors below.")  # Error message
+        # Handle invalid form submissions
+        #messages.error(self.request, "Please correct the errors below.")  # Error message
         return super().form_invalid(form)
+
+    def upload_csv(self, file):
+        # Read the CSV file
+        df = pd.read_csv(file)
+
+        print("CSV Columns:", df.columns)  # Debugging step
+
+        # Iterate over the rows and create Category and SubCategory
+        for index, row in df.iterrows():
+            category_name = row.get('category', None)
+            subcategory_name = row.get('subcategory', None)
+
+            if not category_name or not subcategory_name:
+                print(f"Row {index} is missing category or subcategory, skipping.")
+                continue
+
+            # Ensure category exists or create it
+            category, created_category = Category.objects.get_or_create(name=category_name)
+            if created_category:
+                print(f"Category '{category_name}' created.")
+            else:
+                print(f"Category '{category_name}' already exists.")
+
+            # Create SubCategory and link it to the Category
+            subcategory, created_subcategory = SubCategory.objects.get_or_create(name=subcategory_name, category=category)
+            if created_subcategory:
+                print(f"SubCategory '{subcategory_name}' created and linked to '{category_name}'.")
+            else:
+                print(f"SubCategory '{subcategory_name}' already exists for '{category_name}'.")
+
+        print(f"Finished processing {len(df)} rows.")
+
+    def upload_excel(self, file):
+        # Read the Excel file
+        df = pd.read_excel(file)
+
+        print("Excel Columns:", df.columns)  # Debugging step
+
+        # Iterate over the rows and create Category and SubCategory
+        for index, row in df.iterrows():
+            category_name = row.get('category', None)
+            subcategory_name = row.get('subcategory', None)
+
+            if not category_name or not subcategory_name:
+                print(f"Row {index} is missing category or subcategory, skipping.")
+                continue
+
+            # Ensure category exists or create it
+            category, created_category = Category.objects.get_or_create(name=category_name)
+            if created_category:
+                print(f"Category '{category_name}' created.")
+            else:
+                print(f"Category '{category_name}' already exists.")
+
+            # Create SubCategory and link it to the Category
+            subcategory, created_subcategory = SubCategory.objects.get_or_create(name=subcategory_name, category=category)
+            if created_subcategory:
+                print(f"SubCategory '{subcategory_name}' created and linked to '{category_name}'.")
+            else:
+                print(f"SubCategory '{subcategory_name}' already exists for '{category_name}'.")
+
+        print(f"Finished processing {len(df)} rows.")
+
+
+
+
+
+    
 
    
 #SubCategory Update View

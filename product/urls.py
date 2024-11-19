@@ -4,13 +4,13 @@ from django.conf.urls.static import static
 from .views import *
 
 urlpatterns = [
-    path('category/',CategoryView.as_view(),name='category'),
+    path('category/',CategoryAndFileUploadView.as_view(),name='category'),
     path('categoryList/',categoryViewlist.as_view(),name="categorylist"),
     path('category/<int:pk>/edit/',CategoryUpdateView.as_view(),name="categoryupdate"),
-     
+ 
 
 
-    path('subcategory/',SubCategoryView.as_view(),name='subcategory'),
+    path('subcategory/',SubCategoryAndFileUploadView.as_view(),name='subcategory'),
     path('subcategoryList/',SubcategoryViewlist.as_view(),name="subcategorylist"),
     path('subcategory/<int:pk>/edit/',SubCategoryUpdateView.as_view(),name="subcategoryupdate"),
   
@@ -49,6 +49,6 @@ urlpatterns = [
     #path('custom/<str:start_date>/<str:end_date>/', CustomDateReportView.as_view(), name='custom_date_report'),
     path('custom-date-report/', CustomDateReportView.as_view(), name='custom_date_report'),
 
-    
+    #path('upload/', FileUploadView.as_view(), name='file_upload'),
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
