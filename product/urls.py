@@ -29,9 +29,11 @@ urlpatterns = [
     
 
     path('purchase/',PurchaseCreate.as_view(),name="purchase"),
-    path('purchase/create/<int:product_id>/', PurchaseCreate.as_view(), name='purchase_create'),
+    path('purchase/create/', PurchaseCreate.as_view(), name='purchase_create'),
     path('purchase/receipt/<int:purchase_id>/', InvoiceView.as_view(), name="purchase_receipt"),  # Show a specific receipt
     path("purchaseList/",PurchaseListView.as_view(),name="purchaseList"),
+    path('purchase/create/<int:product_id>/', PurchaseCreate.as_view(), name='Reorder'),
+
 
 
 

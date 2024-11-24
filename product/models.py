@@ -1,4 +1,5 @@
 
+from decimal import Decimal
 from django.db import models
 
 import uuid
@@ -21,8 +22,8 @@ class SubCategory(models.Model):
 
 class Product(models.Model):
     name=models.CharField(max_length=100)
-    purchase_price=models.FloatField()
-    sale_price=models.FloatField()
+    purchase_price=models.DecimalField(max_digits=10, decimal_places=2)
+    sale_price=models.DecimalField(max_digits=10, decimal_places=2)
     thumbnail_image=models.ImageField(upload_to='images/')
     category=models.ForeignKey(Category,related_name="Category",on_delete=models.CASCADE)
     SubCategory=models.ForeignKey(SubCategory,related_name="Subcategory",on_delete=models.CASCADE)
@@ -81,9 +82,9 @@ class Invoice(models.Model):
     
     invoice_number = models.CharField(max_length=50, unique=True)  # Unique invoice number
     invoice_date = models.DateField(auto_now_add=True)
-    total_amount = models.FloatField()  # Total amount of the invoice (for purchase or sale)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    paid_amount = models.DecimalField(max_digits=10, decimal_places=2)  # Total amount of the invoice (for purchase or sale)
     discount = models.FloatField()  # Discount applied (if any)
-    paid_amount = models.FloatField()  # Amount paid
     due_amount = models.FloatField()  # Due amount
     status = models.CharField(max_length=20, choices=[('Paid', 'Paid'), ('Due', 'Due')], default='Due')
     
@@ -100,10 +101,10 @@ class Purchase(models.Model):
     productname=models.ForeignKey(Product,related_name="Product",on_delete=models.CASCADE)
     suppliername=models.ForeignKey(Supplier,related_name="supplier",on_delete=models.CASCADE)
     quantity=models.IntegerField()
-    totalAmount=models.FloatField()
-    discount=models.FloatField()
-    dueAmount=models.FloatField()
-    paidAmount=models.FloatField()
+    totalAmount=models.DecimalField(max_digits=10, decimal_places=2)
+    discount=models.DecimalField(max_digits=10, decimal_places=2)
+    dueAmount=models.DecimalField(max_digits=10, decimal_places=2)
+    paidAmount=models.DecimalField(max_digits=10, decimal_places=2)
     create_at=models.DateField(auto_now=True)
     update_at=models.DateField(auto_now=True)
     invoice = models.ForeignKey(Invoice, related_name="purchases", on_delete=models.CASCADE)  # Link to Invoice
@@ -117,6 +118,7 @@ class Purchase(models.Model):
                 paid_amount=self.paid_amount,
             )
             self.invoice = invoice
+           
         # Automatically calculate totalAmount and dueAmount before saving
         self.totalAmount =(self.productname.purchase_price- self.discount) * self.quantity  # Total = Price * Quantity
         self.dueAmount = self.totalAmount - self.paidAmount   # Due = Total - Paid - Discount
@@ -144,9 +146,9 @@ class Selles(models.Model):
     product=models.ForeignKey(Product,related_name="ProductP",on_delete=models.CASCADE)
     quantity=models.IntegerField()
     customer=models.ForeignKey(Customer,related_name="customerC",on_delete=models.CASCADE)
-    totalPrice=models.IntegerField()
-    discountAmount=models.IntegerField()
-    paidAmount=models.IntegerField()
+    totalPrice=models.DecimalField(max_digits=10, decimal_places=2)
+    discountAmount=models.DecimalField(max_digits=10, decimal_places=2)
+    paidAmount=models.DecimalField(max_digits=10, decimal_places=2)
     DueAmount=models.IntegerField()
     create_at=models.DateField(auto_now=True)
     update_at=models.DateField(auto_now=True)

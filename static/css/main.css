@@ -1,4 +1,41 @@
-body {
+
+ .card {
+   margin: 10px;
+ }
+
+ .card-header {
+   font-weight: bold;
+ }
+
+ .total-purchase {
+   background-color: #f8d7da;
+ }
+
+ .total-sales {
+   background-color: #d4edda;
+ }
+
+ .total-invoice {
+   background-color: #cce5ff;
+ }
+
+ .total-profit {
+   background-color: #fff3cd;
+ }
+
+ .daily-sales {
+   background-color: #d1ecf1;
+ }
+
+ .daily-purchases {
+   background-color: #e2e3e5;
+ }
+
+ .daily-invoices {
+   background-color: #f1f3f5;
+ }
+
+/* body {
   font-family: Arial, sans-serif;
 }
 .dashboard-section {
@@ -6,7 +43,7 @@ body {
 }
 .table td, .table th {
   text-align: center;
-}
+} */
 
 #weatherWidget .currentDesc {
     color: #ffffff !important;

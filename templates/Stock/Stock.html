@@ -1,22 +1,44 @@
-{% extends "../navbar.html" %}
-
-{% block content %}
+{% extends "../navbar.html" %} {% block content %}
 <h2 class="mb-3">This is Product Stock List</h2>
 
 <!-- Filter Form -->
 <form method="get" class="mb-4">
   <div class="form-row">
     <div class="col">
-      <input type="text" class="form-control" name="product_name" value="{{ request.GET.product_name }}" placeholder="Filter by Product Name">
+      <input
+        type="text"
+        class="form-control"
+        name="product_name"
+        value="{{ request.GET.product_name }}"
+        placeholder="Filter by Product Name"
+      />
     </div>
     <div class="col">
-      <input type="text" class="form-control" name="category" value="{{ request.GET.category }}" placeholder="Filter by Category">
+      <input
+        type="text"
+        class="form-control"
+        name="category"
+        value="{{ request.GET.category }}"
+        placeholder="Filter by Category"
+      />
     </div>
     <div class="col">
-      <input type="number" class="form-control" name="min_quantity" value="{{ request.GET.min_quantity }}" placeholder="Min Quantity">
+      <input
+        type="number"
+        class="form-control"
+        name="min_quantity"
+        value="{{ request.GET.min_quantity }}"
+        placeholder="Min Quantity"
+      />
     </div>
     <div class="col">
-      <input type="number" class="form-control" name="max_quantity" value="{{ request.GET.max_quantity }}" placeholder="Max Quantity">
+      <input
+        type="number"
+        class="form-control"
+        name="max_quantity"
+        value="{{ request.GET.max_quantity }}"
+        placeholder="Max Quantity"
+      />
     </div>
     <div class="col">
       <button type="submit" class="btn btn-primary">Apply Filters</button>
@@ -26,49 +48,57 @@
 
 <!-- Download Buttons -->
 <div class="mb-3">
-  <a href="{% url 'export_stock_pdf' %}?product_name={{ request.GET.product_name }}&category={{ request.GET.category }}&min_quantity={{ request.GET.min_quantity }}&max_quantity={{ request.GET.max_quantity }}" class="btn btn-danger">Download PDF</a>
-  <a href="{% url 'export_stock_excel' %}?product_name={{ request.GET.product_name }}&category={{ request.GET.category }}&min_quantity={{ request.GET.min_quantity }}&max_quantity={{ request.GET.max_quantity }}" class="btn btn-success">Download Excel</a>
+  <a
+    href="{% url 'export_stock_pdf' %}?product_name={{ request.GET.product_name }}&category={{ request.GET.category }}&min_quantity={{ request.GET.min_quantity }}&max_quantity={{ request.GET.max_quantity }}"
+    class="btn btn-danger"
+    >Download PDF</a
+  >
+  <a
+    href="{% url 'export_stock_excel' %}?product_name={{ request.GET.product_name }}&category={{ request.GET.category }}&min_quantity={{ request.GET.min_quantity }}&max_quantity={{ request.GET.max_quantity }}"
+    class="btn btn-success"
+    >Download Excel</a
+  >
 </div>
 
-
-
 <table class="table table-striped">
-    <thead>
-        <tr>
-          <th scope="col">SL</th>
-          <th scope="col">Product Name </th>
-          <th scope="col">Category</th>
-          <th scope="col">Quantity</th>
-          <th scope="col">Created Date</th>
-          <th scope="col">Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for c in stock %}
-        <tr>
-          <th scope="row">{{ forloop.counter }}</th>
-          <td>{{ c.product.name }}</td>
-          <td>{{ c.product.category.name }}</td>
-          <td>{{ c.quantity }}</td>
-          <td>{{ c.created_at }}</td>
-          <td>
-              <a href="{% url 'purchase_create' c.product.pk %}" class="btn btn-info">Reorder</a>
-          </td>
-        </tr>
-        {% empty %}
-          <tr>
-            <td colspan="6">No stock items found</td>
-          </tr>
-        {% endfor %}
-    </tbody>
+  <thead>
+    <tr>
+      <th scope="col">SL</th>
+      <th scope="col">Product Name</th>
+      <th scope="col">Category</th>
+      <th scope="col">Quantity</th>
+      <th scope="col">Created Date</th>
+      <th scope="col">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in stock %}
+    <tr>
+      <th scope="row">{{ forloop.counter }}</th>
+      <td>{{ c.product.name }}</td>
+      <td>{{ c.product.category.name }}</td>
+      <td>{{ c.quantity }}</td>
+      <td>{{ c.created_at }}</td>
+      <td>
+        <a href="{% url 'Reorder' c.product.pk %}" class="btn btn-info"
+          >Reorder</a
+        >
+      </td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="6">No stock items found</td>
+    </tr>
+    {% endfor %}
+  </tbody>
 </table>
 
 <!-- Pagination controls -->
 <div class="pagination">
   <span class="step-links">
     {% if stock.has_previous %}
-      <a href="?page=1">&laquo; first</a>
-      <a href="?page={{ stock.previous_page_number }}">previous</a>
+    <a href="?page=1">&laquo; first</a>
+    <a href="?page={{ stock.previous_page_number }}">previous</a>
     {% endif %}
 
     <span class="current">
@@ -76,8 +106,8 @@
     </span>
 
     {% if stock.has_next %}
-      <a href="?page={{ stock.next_page_number }}">next</a>
-      <a href="?page={{ stock.paginator.num_pages }}">last &raquo;</a>
+    <a href="?page={{ stock.next_page_number }}">next</a>
+    <a href="?page={{ stock.paginator.num_pages }}">last &raquo;</a>
     {% endif %}
   </span>
 </div>

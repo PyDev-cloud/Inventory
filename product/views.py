@@ -495,7 +495,7 @@ class PurchaseCreate(CreateView):
         self.object = form.save()
 
         # Redirect to the purchase receipt page for the created purchase
-        return redirect('purchase_receipt', purchase_id=self.object.id)
+        return redirect('InvoiceView', purchase_id=self.object.id)
 
     def form_invalid(self, form):
         # If the form is invalid, return to the form page with the errors
@@ -909,11 +909,11 @@ class DashboardView(TemplateView):
 
         # Daily Sales
         today_sales = Selles.objects.filter(create_at=date.today())
-        daily_sales_amount = today_sales.aggregate(Sum('total_price'))['total_price__sum'] or 0
+        daily_sales_amount = today_sales.aggregate(Sum('totalPrice'))['totalPrice__sum'] or 0
 
         # Daily Purchases
         today_purchases = Purchase.objects.filter(create_at=date.today())
-        daily_purchase_amount = today_purchases.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        daily_purchase_amount = today_purchases.aggregate(Sum('totalAmount'))['totalAmount__sum'] or 0
 
         # Daily Invoices
         today_invoices = Invoice.objects.filter(invoice_date=date.today())
