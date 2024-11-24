@@ -12,6 +12,10 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from datetime import datetime
+from datetime import date
+from django.db.models import Sum, F, Q
+
+
 from django.views.generic import *
 from .models import *
 from .forms import *
@@ -452,14 +456,7 @@ class CustomerUpdateView(UpdateView):
 
 
 
-class PurchaseReceiptView(View):
-    def get(self, request, purchase_id):
-        # Fetch the Purchase object by ID, or return 404 if it doesn't exist
-        purchase = get_object_or_404(Purchase, id=purchase_id)
 
-        # Render the receipt template with the purchase data
-        return render(request, 'Receipt/PurchaseReceipt.html', {'purchase': purchase})
-    
 class PurchaseCreate(CreateView):
     model = Purchase
     form_class = PurchaseForm
@@ -735,6 +732,21 @@ class CustomDateReportView(TemplateView):
     
 
 
+class InvoiceView(TemplateView):
+    template_name = 'Receipt/purchaseRecipt.html'
+
+    def get_context_data(self, **kwargs):
+        # Get the context data to pass to the template
+        context = super().get_context_data(**kwargs)
+
+        # Get sales invoices (invoices linked to sales)
+        context['sale_invoices'] = Invoice.objects.filter(SallesInvoice__isnull=False).select_related('SallesInvoice')
+        
+        # Get purchase invoices (invoices linked to purchases)
+        context['purchase_invoices'] = Invoice.objects.filter(PurchaseInvoice__isnull=False).select_related('PurchaseInvoice')
+
+        return context
+
 
 
 class StockView(View):
@@ -866,3 +878,64 @@ def export_stock_excel(request):
         wb.save(response)
 
         return response
+
+
+class DashboardView(TemplateView):
+    template_name = 'Dashboard/dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Total Purchases
+        total_purchases = Purchase.objects.all()
+        total_purchase_amount = total_purchases.aggregate(Sum('totalAmount'))['totalAmount__sum'] or 0
+        total_purchase_paid = total_purchases.aggregate(Sum('paidAmount'))['paidAmount__sum'] or 0
+        total_purchase_due = total_purchase_amount - total_purchase_paid
+
+        # Total Sales
+        total_sales = Selles.objects.all()
+        total_sales_amount = total_sales.aggregate(Sum('totalPrice'))['totalPrice__sum'] or 0
+        total_sales_paid = total_sales.aggregate(Sum('paidAmount'))['paidAmount__sum'] or 0
+        total_sales_due = total_sales_amount - total_sales_paid
+
+        # Total Invoices
+        total_invoices = Invoice.objects.all()
+        total_invoice_amount = total_invoices.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        total_invoice_paid = total_invoices.aggregate(Sum('paid_amount'))['paid_amount__sum'] or 0
+        total_invoice_due = total_invoice_amount - total_invoice_paid
+
+        # Total Profit
+        total_profit = total_sales_amount - total_purchase_amount  # Profit = Sales - Purchases
+
+        # Daily Sales
+        today_sales = Selles.objects.filter(create_at=date.today())
+        daily_sales_amount = today_sales.aggregate(Sum('total_price'))['total_price__sum'] or 0
+
+        # Daily Purchases
+        today_purchases = Purchase.objects.filter(create_at=date.today())
+        daily_purchase_amount = today_purchases.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+
+        # Daily Invoices
+        today_invoices = Invoice.objects.filter(invoice_date=date.today())
+        daily_invoice_amount = today_invoices.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+
+        context.update({
+            'total_purchase_amount': total_purchase_amount,
+            'total_purchase_paid': total_purchase_paid,
+            'total_purchase_due': total_purchase_due,
+            'total_sales_amount': total_sales_amount,
+            'total_sales_paid': total_sales_paid,
+            'total_sales_due': total_sales_due,
+            'total_invoice_amount': total_invoice_amount,
+            'total_invoice_paid': total_invoice_paid,
+            'total_invoice_due': total_invoice_due,
+            'total_profit': total_profit,
+            'daily_sales_amount': daily_sales_amount,
+            'daily_purchase_amount': daily_purchase_amount,
+            'daily_invoice_amount': daily_invoice_amount,
+            'today_sales': today_sales,
+            'today_purchases': today_purchases,
+            'today_invoices': today_invoices,
+        })
+
+        return context

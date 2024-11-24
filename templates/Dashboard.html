@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .card {
+            margin: 10px;
+        }
+        .card-header {
+            font-weight: bold;
+        }
+        .total-purchase { background-color: #f8d7da; }
+        .total-sales { background-color: #d4edda; }
+        .total-invoice { background-color: #cce5ff; }
+        .total-profit { background-color: #fff3cd; }
+        .daily-sales { background-color: #d1ecf1; }
+        .daily-purchases { background-color: #e2e3e5; }
+        .daily-invoices { background-color: #f1f3f5; }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid">
+    <h1 class="my-4 text-center">Dashboard Overview</h1>
+
+    <!-- Grid for Dashboard Stats -->
+    <div class="row">
+        <!-- Total Sales Card -->
+        <div class="col-md-3">
+            <div class="card total-sales">
+                <div class="card-header">Total Sales</div>
+                <div class="card-body">
+                    <p>Total Sales Amount: ${{ total_sales_amount }}</p>
+                    <p>Total Paid: ${{ total_sales_paid }}</p>
+                    <p>Total Due: ${{ total_sales_due }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Purchases Card -->
+        <div class="col-md-3">
+            <div class="card total-purchase">
+                <div class="card-header">Total Purchases</div>
+                <div class="card-body">
+                    <p>Total Purchase Amount: ${{ total_purchase_amount }}</p>
+                    <p>Total Paid: ${{ total_purchase_paid }}</p>
+                    <p>Total Due: ${{ total_purchase_due }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Invoices Card -->
+        <div class="col-md-3">
+            <div class="card total-invoice">
+                <div class="card-header">Total Invoices</div>
+                <div class="card-body">
+                    <p>Total Invoice Amount: ${{ total_invoice_amount }}</p>
+                    <p>Total Paid: ${{ total_invoice_paid }}</p>
+                    <p>Total Due: ${{ total_invoice_due }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Profit Card -->
+        <div class="col-md-3">
+            <div class="card total-profit">
+                <div class="card-header">Total Profit</div>
+                <div class="card-body">
+                    <p>Total Profit (Sales - Purchases): ${{ total_profit }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Stats Grid -->
+    <div class="row">
+        <!-- Daily Sales Card -->
+        <div class="col-md-4">
+            <div class="card daily-sales">
+                <div class="card-header">Daily Sales</div>
+                <div class="card-body">
+                    <p>Today's Sales Amount: ${{ daily_sales_amount }}</p>
+                    <ul>
+                        {% for sale in today_sales %}
+                            <li>{{ sale.product.name }} - Customer: {{ sale.customer.name }} - Amount: ${{ sale.total_price }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Daily Purchases Card -->
+        <div class="col-md-4">
+            <div class="card daily-purchases">
+                <div class="card-header">Daily Purchases</div>
+                <div class="card-body">
+                    <p>Today's Purchases Amount: ${{ daily_purchase_amount }}</p>
+                    <ul>
+                        {% for purchase in today_purchases %}
+                            <li>{{ purchase.product.name }} - Supplier: {{ purchase.supplier.name }} - Amount: ${{ purchase.total_amount }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Daily Invoices Card -->
+        <div class="col-md-4">
+            <div class="card daily-invoices">
+                <div class="card-header">Daily Invoices</div>
+                <div class="card-body">
+                    <p>Today's Invoices Amount: ${{ daily_invoice_amount }}</p>
+                    <ul>
+                        {% for invoice in today_invoices %}
+                            <li>Invoice Number: {{ invoice.invoice_number }} - Amount: ${{ invoice.total_amount }} - Status: {{ invoice.status }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS (Optional for some features like Collapse) -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

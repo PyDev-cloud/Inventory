@@ -1,7 +1,7 @@
 
 from django.db import models
 
-
+import uuid
 
 # Create your models here.
 
@@ -77,6 +77,24 @@ class Stock(models.Model):
         return self.quantity
 
 
+class Invoice(models.Model):
+    
+    invoice_number = models.CharField(max_length=50, unique=True)  # Unique invoice number
+    invoice_date = models.DateField(auto_now_add=True)
+    total_amount = models.FloatField()  # Total amount of the invoice (for purchase or sale)
+    discount = models.FloatField()  # Discount applied (if any)
+    paid_amount = models.FloatField()  # Amount paid
+    due_amount = models.FloatField()  # Due amount
+    status = models.CharField(max_length=20, choices=[('Paid', 'Paid'), ('Due', 'Due')], default='Due')
+    
+    
+    def __str__(self):
+        return self.invoice_number
+
+    def save(self, *args, **kwargs):
+        self.due_amount = self.total_amount - self.paid_amount
+        super().save(*args, **kwargs)
+
 
 class Purchase(models.Model):
     productname=models.ForeignKey(Product,related_name="Product",on_delete=models.CASCADE)
@@ -88,17 +106,26 @@ class Purchase(models.Model):
     paidAmount=models.FloatField()
     create_at=models.DateField(auto_now=True)
     update_at=models.DateField(auto_now=True)
+    invoice = models.ForeignKey(Invoice, related_name="purchases", on_delete=models.CASCADE)  # Link to Invoice
 
     def save(self, *args, **kwargs):
+        if not self.invoice:
+            invoice = Invoice.objects.create(
+                invoice_number=str(uuid.uuid4()),  # Generate a unique invoice number
+                total_amount=self.total_amount,
+                discount=self.discount,
+                paid_amount=self.paid_amount,
+            )
+            self.invoice = invoice
         # Automatically calculate totalAmount and dueAmount before saving
-        self.totalAmount = self.productname.purchase_price * self.quantity  # Total = Price * Quantity
-        self.dueAmount = self.totalAmount - self.paidAmount - self.discount  # Due = Total - Paid - Discount
+        self.totalAmount =(self.productname.purchase_price- self.discount) * self.quantity  # Total = Price * Quantity
+        self.dueAmount = self.totalAmount - self.paidAmount   # Due = Total - Paid - Discount
          # Add stock when purchase is made
         stock, created = Stock.objects.get_or_create(product=self.productname)
         stock.add_stock(self.quantity)  # Increase stock based on purchase quantity
 
         super(Purchase, self).save(*args, **kwargs)
-
+    
 
 
 
@@ -123,15 +150,24 @@ class Selles(models.Model):
     DueAmount=models.IntegerField()
     create_at=models.DateField(auto_now=True)
     update_at=models.DateField(auto_now=True)
+    invoice = models.ForeignKey(Invoice, related_name="sales", on_delete=models.CASCADE)  # Link to Invoice
     
     
     def save(self, *args, **kwargs):
+        if not self.invoice:
+            invoice = Invoice.objects.create(
+                invoice_number=str(uuid.uuid4()),  # Generate a unique invoice number
+                total_amount=self.total_price,
+                discount=self.discount_amount,
+                paid_amount=self.paid_amount,
+            )
+            self.invoice = invoice
         # Calculate totalPrice (product price * quantity, assuming quantity field exists in Product or Selles)
         if self.product:  # Ensure the product exists
-            self.totalPrice = self.product.sale_price * self.quantity  # assuming product has a price field
+            self.totalPrice = (self.product.sale_price- self.discountAmount) * self.quantity  # assuming product has a price field
 
         # Calculate dueAmount: totalPrice - paidAmount - discountAmount
-        self.DueAmount = self.totalPrice - self.paidAmount - self.discountAmount
+        self.DueAmount = self.totalPrice - self.paidAmount 
 
          # Reduce stock when sale is made
         stock = Stock.objects.get(product=self.product)
@@ -142,3 +178,8 @@ class Selles(models.Model):
 
     def __str__(self):
         return f'Sell of {self.product.name} to {self.customer.name}'
+    
+
+
+
+    

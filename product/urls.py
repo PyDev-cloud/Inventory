@@ -4,6 +4,7 @@ from django.conf.urls.static import static
 from .views import *
 
 urlpatterns = [
+    path('Dashboard/', DashboardView.as_view(), name='dashboard'),
     path('category/',CategoryAndFileUploadView.as_view(),name='category'),
     path('categoryList/',categoryViewlist.as_view(),name="categorylist"),
     path('category/<int:pk>/edit/',CategoryUpdateView.as_view(),name="categoryupdate"),
@@ -29,7 +30,7 @@ urlpatterns = [
 
     path('purchase/',PurchaseCreate.as_view(),name="purchase"),
     path('purchase/create/<int:product_id>/', PurchaseCreate.as_view(), name='purchase_create'),
-    path('purchase/receipt/<int:purchase_id>/', PurchaseReceiptView.as_view(), name="purchase_receipt"),  # Show a specific receipt
+    path('purchase/receipt/<int:purchase_id>/', InvoiceView.as_view(), name="purchase_receipt"),  # Show a specific receipt
     path("purchaseList/",PurchaseListView.as_view(),name="purchaseList"),
 
 
