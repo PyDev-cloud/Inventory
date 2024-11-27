@@ -9,9 +9,13 @@
       <div class="card total-sales">
         <div class="card-header">Total Sales</div>
         <div class="card-body">
-          <p>Total Sales Amount: ${{ total_sales_amount }}</p>
-          <p>Total Paid: ${{ total_sales_paid }}</p>
-          <p>Total Due: ${{ total_sales_due }}</p>
+          <p>
+          <a  href="#">Total Sales Amount: ${{ total_sales_amount }}</a> </p>
+          <p>
+          <a  href="#">Total Paid: ${{ total_sales_paid }}</a></p>
+          <p>
+          <a  href="#">Total Due: ${{ total_sales_due }}</a>
+          </p>
         </div>
       </div>
     </div>
@@ -21,9 +25,9 @@
       <div class="card total-purchase">
         <div class="card-header">Total Purchases</div>
         <div class="card-body">
-          <p>Total Purchase Amount: ${{ total_purchase_amount }}</p>
-          <p>Total Paid: ${{ total_purchase_paid }}</p>
-          <p>Total Due: ${{ total_purchase_due }}</p>
+          <p><a href="#">Total Purchase Amount: ${{ total_purchase_amount }}</a></p>
+          <p><a href="#">Total Paid: ${{ total_purchase_paid }}</a></p>
+          <p><a href="#">Total Due: ${{ total_purchase_due }}</a></p>
         </div>
       </div>
     </div>
@@ -33,9 +37,9 @@
       <div class="card total-invoice">
         <div class="card-header">Total Invoices</div>
         <div class="card-body">
-          <p>Total Invoice Amount: ${{ total_invoice_amount }}</p>
-          <p>Total Paid: ${{ total_invoice_paid }}</p>
-          <p>Total Due: ${{ total_invoice_due }}</p>
+          <p><a href="#">Total Invoice Amount: ${{ total_invoice_amount }}</a></p>
+          <p><a href="#">Total Paid: ${{ total_invoice_paid }}</a></p>
+          <p><a href="#">Total Due: ${{ total_invoice_due }}</a></p>
         </div>
       </div>
     </div>
@@ -45,7 +49,7 @@
       <div class="card total-profit">
         <div class="card-header">Total Profit</div>
         <div class="card-body">
-          <p>Total Profit (Sales - Purchases): ${{ total_profit }}</p>
+          <p><a href="#">Total Profit (Sales - Purchases): ${{ total_profit }}</a></p>
         </div>
       </div>
     </div>
@@ -58,7 +62,7 @@
       <div class="card daily-sales">
         <div class="card-header">Daily Sales</div>
         <div class="card-body">
-          <p>Today's Sales Amount: ${{ daily_sales_amount }}</p>
+          <p><a href="#">Today's Sales Amount: ${{ daily_sales_amount }}</a></p>
           <ul>
             {% for sale in today_sales %}
             <li>

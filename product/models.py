@@ -153,7 +153,7 @@ class Selles(models.Model):
     create_at=models.DateField(auto_now=True)
     update_at=models.DateField(auto_now=True)
     invoice = models.ForeignKey(Invoice, related_name="sales", on_delete=models.CASCADE)  # Link to Invoice
-    
+    profit = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     
     def save(self, *args, **kwargs):
         if not self.invoice:
@@ -175,7 +175,18 @@ class Selles(models.Model):
         stock = Stock.objects.get(product=self.product)
         stock.reduce_stock(self.quantity)  # Decrease stock based on sale quantity
 
-        # Now, save the instance
+
+
+        #For Profit Calculation 
+        product = self.product
+        purchase_price = product.purchase_price
+        
+        # Calculate the profit (purchase_price - totalPrice)
+        # Assuming you want the profit for the total sale, not just for one unit
+        # If you are selling multiple quantities, the total profit will be multiplied by quantity
+        self.profit = Decimal(purchase_price) * self.quantity - self.totalPrice
+        
+        # Call the parent class's save method
         super(Selles, self).save(*args, **kwargs)
 
     def __str__(self):

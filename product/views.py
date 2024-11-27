@@ -1,3 +1,4 @@
+from django.contrib import messages
 import pandas as pd
 from django.core.paginator import Paginator, EmptyPage, Page
 import openpyxl
@@ -7,13 +8,13 @@ from django.http import HttpResponse, JsonResponse
 from django.db.models import Sum
 from django.utils import timezone
 from datetime import timedelta
-from pyexpat.errors import messages
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from datetime import datetime
 from datetime import date
-from django.db.models import Sum, F, Q
+from django.db.models.functions import TruncMonth
+
 
 
 from django.views.generic import *
@@ -211,7 +212,7 @@ class SubCategoryAndFileUploadView(FormView):
                     messages.success(request, "Excel file processed successfully!")
                 else:
                     messages.error(request, "Invalid file type. Only CSV and Excel files are allowed.")
-                return redirect('subcategory_list')  # Redirect after successful file processing
+                return redirect('subcategorylist')  # Redirect after successful file processing
         elif subcategory_form.is_valid():
             # If the manual SubCategory form was submitted
             category_name = subcategory_form.cleaned_data['category']
@@ -225,7 +226,7 @@ class SubCategoryAndFileUploadView(FormView):
             
             SubCategory.objects.create(name=subcategory_name, category=category)
             messages.success(request, f"SubCategory '{subcategory_name}' created successfully!")
-            return redirect('subcategory_list')  # Redirect after successful form submission
+            return redirect('subcategorylist')  # Redirect after successful form submission
 
         # If neither form is valid, render the page with error messages
         return render(request, self.template_name, {
@@ -399,6 +400,7 @@ class SupplierCreate(CreateView):
     model=Supplier
     form_class=SupplierForm
     template_name="supplier/SupplierCreate.html"
+    success_url=reverse_lazy('SupplierList')
 
     def form_valid(self, form):
         form.save()
@@ -425,9 +427,10 @@ class CustomerCreate(CreateView):
     model=Customer
     form_class=CustomarForm
     template_name="customer/Customercreate.html"
+    success_url=reverse_lazy('customerlist')
     def form_valid(self, form):
         form.save()
-        messages.success(self.request, "Category created successfully!")  # Success message
+        messages.success(self.request, "Customer created successfully!")  # Success message
         return super().form_valid(form)
     
     def form_invalid(self, form):
@@ -885,21 +888,26 @@ class DashboardView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        current_month = datetime.now().month
+        current_year = datetime.now().year
         
         # Total Purchases
-        total_purchases = Purchase.objects.all()
+        total_purchases = Purchase.objects.filter(create_at__month=current_month, create_at__year=current_year)
         total_purchase_amount = total_purchases.aggregate(Sum('totalAmount'))['totalAmount__sum'] or 0
         total_purchase_paid = total_purchases.aggregate(Sum('paidAmount'))['paidAmount__sum'] or 0
         total_purchase_due = total_purchase_amount - total_purchase_paid
 
         # Total Sales
-        total_sales = Selles.objects.all()
+        total_sales = Selles.objects.filter(create_at__month=current_month, create_at__year=current_year)
         total_sales_amount = total_sales.aggregate(Sum('totalPrice'))['totalPrice__sum'] or 0
         total_sales_paid = total_sales.aggregate(Sum('paidAmount'))['paidAmount__sum'] or 0
+        total_profit=total_sales.aggregate(Sum('profit'))['profit__sum'] or 0
         total_sales_due = total_sales_amount - total_sales_paid
+        
+        
 
         # Total Invoices
-        total_invoices = Invoice.objects.all()
+        total_invoices = Invoice.objects.filter(invoice_date__month=current_month, invoice_date__year=current_year)
         total_invoice_amount = total_invoices.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
         total_invoice_paid = total_invoices.aggregate(Sum('paid_amount'))['paid_amount__sum'] or 0
         total_invoice_due = total_invoice_amount - total_invoice_paid
@@ -910,10 +918,14 @@ class DashboardView(TemplateView):
         # Daily Sales
         today_sales = Selles.objects.filter(create_at=date.today())
         daily_sales_amount = today_sales.aggregate(Sum('totalPrice'))['totalPrice__sum'] or 0
+        daily_profit=today_sales.aggregate(Sum('profit'))['profit__sum'] or 0
 
         # Daily Purchases
         today_purchases = Purchase.objects.filter(create_at=date.today())
         daily_purchase_amount = today_purchases.aggregate(Sum('totalAmount'))['totalAmount__sum'] or 0
+
+      
+
 
         # Daily Invoices
         today_invoices = Invoice.objects.filter(invoice_date=date.today())
@@ -936,6 +948,8 @@ class DashboardView(TemplateView):
             'today_sales': today_sales,
             'today_purchases': today_purchases,
             'today_invoices': today_invoices,
+            'total_profit':total_profit,
+            'daily_profit':daily_profit,
         })
 
         return context

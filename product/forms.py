@@ -6,7 +6,7 @@ class ProductForm(forms.ModelForm):
         model = Product  # Use 'model' instead of 'models'
         fields = [
             'name', 'thumbnail_image', 'quantity', 'purchase_price', 
-            'sale_price', 'category', 'sub_category', 
+            'sale_price', 'category', 'SubCategory', 
             'unit_mesurement', 'unit_type', 'reorder_quantity', 'sku'
         ]
         
@@ -16,8 +16,8 @@ class ProductForm(forms.ModelForm):
     quantity = forms.IntegerField(widget=forms.NumberInput(attrs={'class': 'form-control'}))
     purchase_price = forms.DecimalField(widget=forms.NumberInput(attrs={'class': 'form-control'}))
     sale_price = forms.DecimalField(widget=forms.NumberInput(attrs={'class': 'form-control'}))
-    category = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control'}))
-    sub_category = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control'}))
+    category = forms.Select(attrs={'class': 'form-control form-control-lg'})
+    SubCategory = forms.Select(attrs={'class': 'form-control form-control-lg'})
     unit_mesurement = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control'}))
     unit_type = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control'}))
     reorder_quantity = forms.IntegerField(widget=forms.NumberInput(attrs={'class': 'form-control'}))
@@ -31,10 +31,9 @@ class SubCategoryForm(forms.ModelForm):
         fields=['name','category']
         widgets={
             'name': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name'}),
-            'category': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name'})
+            'category': forms.Select(attrs={'class': 'form-control form-control-lg'})
         }
-        name = forms.CharField(required=False)  # Make 'name' optional
-        category = forms.CharField(required=False)  # Make 'category' optional
+        
         
 
 class CategoryForm(forms.ModelForm):
