@@ -1,4 +1,6 @@
 from django.contrib import messages
+from datetime import datetime
+from django.db.models import Q
 import pandas as pd
 from django.core.paginator import Paginator, EmptyPage, Page
 import openpyxl
@@ -953,3 +955,87 @@ class DashboardView(TemplateView):
         })
 
         return context
+    
+
+
+
+class PurchaseListView(ListView):
+    model = Purchase
+    template_name = 'PurchaseDetails.html'  # Replace with your actual template
+    context_object_name = 'purchases'
+
+    def get_queryset(self):
+        # Get filter parameters from the GET request
+        due_amount_filter = self.request.GET.get('dueAmount', None)
+        date_from_filter = self.request.GET.get('date_from', None)
+        date_to_filter = self.request.GET.get('date_to', None)
+
+        # Start with all Purchase objects
+        queryset = Purchase.objects.all()
+
+        # Apply filtering based on due amount
+        if due_amount_filter:
+            try:
+                # Ensure due_amount_filter is a number (float or Decimal)
+                due_amount_filter = Decimal(due_amount_filter)
+                queryset = queryset.filter(dueAmount__gte=due_amount_filter)
+            except ValueError:
+                # If the value can't be converted to a Decimal, skip the filter
+                pass
+
+        # Apply filtering based on date range (create_at is assumed to be a DateTimeField)
+        if date_from_filter:
+            try:
+                parsed_date_from = datetime.strptime(date_from_filter, '%Y-%m-%d').date()
+                queryset = queryset.filter(create_at__gte=parsed_date_from)
+            except ValueError:
+                pass
+
+        if date_to_filter:
+            try:
+                parsed_date_to = datetime.strptime(date_to_filter, '%Y-%m-%d').date()
+                queryset = queryset.filter(create_at__lte=parsed_date_to)
+            except ValueError:
+                pass
+
+        return queryset
+
+    def get(self, request, *args, **kwargs):
+        # Check if user wants to download the data
+        if 'csv' in request.GET:
+            return self.export_to_csv()
+        elif 'excel' in request.GET:
+            return self.export_to_excel()
+        
+        return super().get(request, *args, **kwargs)
+
+    def export_to_csv(self):
+        queryset = self.get_queryset()
+
+        # Create a pandas DataFrame from the queryset
+        df = pd.DataFrame(list(queryset.values('id', 'dueAmount', 'create_at')))
+
+        # Create the HTTP response with the appropriate content type
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="purchases.csv"'
+
+        # Write the DataFrame to the response in CSV format
+        df.to_csv(path_or_buffer=response, index=False, header=True)
+        
+        return response
+
+    def export_to_excel(self):
+        queryset = self.get_queryset()
+
+        # Create a pandas DataFrame from the queryset
+        df = pd.DataFrame(list(queryset.values('id', 'dueAmount',  'create_at')))
+
+        # Create the HTTP response with the appropriate content type
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="purchases.xlsx"'
+
+        # Write the DataFrame to the response in Excel format
+        with pd.ExcelWriter(response, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Purchases')
+
+        return response

@@ -1,0 +1,84 @@
+{% extends "navbar.html" %} {% block content %}
+
+<div class="container mt-5">
+  <h2>Purchase List</h2>
+
+  <!-- Filter Form -->
+  <form method="get" class="form-inline mb-4">
+    <div class="form-group mr-3">
+      <label for="dueAmount" class="mr-2">Due Amount</label>
+      <input
+        type="number"
+        step="0.01"
+        name="dueAmount"
+        id="dueAmount"
+        class="form-control"
+        value="{{ request.GET.dueAmount }}"
+        placeholder="Min Due Amount"
+      />
+    </div>
+    <div class="form-group mr-3">
+      <label for="date_from" class="mr-2">From Date</label>
+      <input
+        type="date"
+        name="date_from"
+        id="date_from"
+        class="form-control"
+        value="{{ request.GET.date_from }}"
+      />
+    </div>
+    <div class="form-group mr-3">
+      <label for="date_to" class="mr-2">To Date</label>
+      <input
+        type="date"
+        name="date_to"
+        id="date_to"
+        class="form-control"
+        value="{{ request.GET.date_to }}"
+      />
+    </div>
+    <button type="submit" class="btn btn-primary">Apply Filters</button>
+  </form>
+
+  <!-- Download Buttons -->
+  <div class="mb-3">
+    <a
+      href="?csv=true&dueAmount={{ request.GET.dueAmount }}&date_from={{ request.GET.date_from }}&date_to={{ request.GET.date_to }}"
+      class="btn btn-success"
+      >Download as CSV</a
+    >
+    <a
+      href="?excel=true&dueAmount={{ request.GET.dueAmount }}&date_from={{ request.GET.date_from }}&date_to={{ request.GET.date_to }}"
+      class="btn btn-info"
+      >Download as Excel</a
+    >
+  </div>
+
+  <!-- Purchase List -->
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Due Amount</th>
+        <th>Purchase Date</th>
+        <th>Created At</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if purchases %} {% for purchase in purchases %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ purchase.dueAmount }}</td>
+        <td>{{ purchase.purchase_date }}</td>
+        <td>{{ purchase.create_at }}</td>
+      </tr>
+      {% endfor %} {% else %}
+      <tr>
+        <td colspan="4">No purchases found based on the applied filters.</td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock content %}

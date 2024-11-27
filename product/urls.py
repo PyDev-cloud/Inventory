@@ -54,4 +54,6 @@ urlpatterns = [
 
     #path('upload/', FileUploadView.as_view(), name='file_upload'),
 
+    path('purchases/', PurchaseListView.as_view(), name='purchase_list'),
+
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
