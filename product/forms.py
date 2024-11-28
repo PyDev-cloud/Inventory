@@ -119,3 +119,9 @@ class SellesForm(forms.ModelForm):
 
 class FileUploadForm(forms.Form):
     file = forms.FileField()
+
+
+class PurchaseInvoiceForm(forms.ModelForm):
+    class Meta:
+        model = PurchaseInvoice
+        fields ="__all__"

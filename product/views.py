@@ -460,51 +460,64 @@ class CustomerUpdateView(UpdateView):
 
 
 
-
-
-class PurchaseCreate(CreateView):
-    model = Purchase
-    form_class = PurchaseForm
-    template_name = 'purchase/Purchasecreate.html'
-    success_url = reverse_lazy('purchaseList')  # Redirect to the order list view after successful creation
+class InvoiceView(TemplateView):
+    template_name = 'Receipt/purchaseRecipt.html'
 
     def get_context_data(self, **kwargs):
-        """
-        Pass the product data to the context if the product_id is passed in the URL.
-        """
         context = super().get_context_data(**kwargs)
-        product_id = self.kwargs.get('product_id')  # Get the product_id from the URL
-        if product_id:
-            # Make sure the product exists and pass it to the context
-            product_instance = get_object_or_404(Product, id=product_id)
-            context['product'] = product_instance
+
+        purchase_id = self.kwargs.get('purchase_id')
+        if purchase_id:
+            # Attempt to get the invoice for the purchase
+            purchase_invoice = PurchaseInvoice.objects.filter(purchase__id=purchase_id).first()
+            
+            if purchase_invoice:
+                context['purchase_invoice'] = purchase_invoice
+            else:
+                context['purchase_invoice'] = None  # Handle the case when no invoice exists for this purchase
+
         return context
+    
+
+class PurchaseCreateView(CreateView):
+    model = Purchase
+    form_class = PurchaseForm  # Assume you have a form for Purchase model
+    template_name = 'purchase/Purchasecreate.html'  # The template where the form is shown
+    success_url = reverse_lazy('purchaseList')  # Redirect to the list of purchases after success
 
     def form_valid(self, form):
-        """
-        Override the form_valid method to include the Product when saving the Purchase.
-        """
-        product_id = self.kwargs.get('product_id')
-        
-        if product_id:
-            try:
-                # Get the product by its ID and ensure we don't have name collision
-                product_instance = Product.objects.get(id=product_id)
-                form.instance.product = product_instance  # Associate the product with the purchase
-            except Product.DoesNotExist:
-                # If the product doesn't exist, add an error and return the invalid form
-                form.add_error(None, "Product does not exist.")
-                return self.form_invalid(form)
-        
-        # Save the purchase object to the database
+        # First, save the Purchase object to ensure it's created
         self.object = form.save()
 
-        # Redirect to the purchase receipt page for the created purchase
-        return redirect('InvoiceView', purchase_id=self.object.id)
+        # Create the associated PurchaseInvoice automatically
+        invoice = PurchaseInvoice.objects.create(
+            invoice_number=str(uuid.uuid4()),  # Generate a unique invoice number
+            total_amount=self.object.totalAmount,
+            discount=self.object.discount,
+            paid_amount=self.object.paidAmount,
+            due_amount=self.object.dueAmount,  # Calculate based on the purchase
+        )
 
-    def form_invalid(self, form):
-        # If the form is invalid, return to the form page with the errors
-        return super().form_invalid(form)
+        # Link the invoice to the purchase
+        self.object.invoice = invoice  # Set the invoice for this purchase
+
+        # Save the purchase object (now with the invoice linked)
+        self.object.save()
+
+        # Redirect to the Purchase Invoice detail page
+        return redirect('purchase_invoice_detail', invoice_id=invoice.id)
+
+# Create a view to show the Purchase Invoice
+class PurchaseInvoiceDetailView(CreateView):
+    model = PurchaseInvoice
+    template_name = 'Dashboard/dashboard.html'  # The template where the invoice is shown
+    form_class=PurchaseInvoiceForm
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        invoice_id = self.kwargs['invoice_id']
+        invoice = PurchaseInvoice.objects.get(id=invoice_id)
+        context['invoice'] = invoice
+        return context
     
 
 class PurchaseListView(ListView):
@@ -737,20 +750,7 @@ class CustomDateReportView(TemplateView):
     
 
 
-class InvoiceView(TemplateView):
-    template_name = 'Receipt/purchaseRecipt.html'
 
-    def get_context_data(self, **kwargs):
-        # Get the context data to pass to the template
-        context = super().get_context_data(**kwargs)
-
-        # Get sales invoices (invoices linked to sales)
-        context['sale_invoices'] = Invoice.objects.filter(SallesInvoice__isnull=False).select_related('SallesInvoice')
-        
-        # Get purchase invoices (invoices linked to purchases)
-        context['purchase_invoices'] = Invoice.objects.filter(PurchaseInvoice__isnull=False).select_related('PurchaseInvoice')
-
-        return context
 
 
 
@@ -909,7 +909,7 @@ class DashboardView(TemplateView):
         
 
         # Total Invoices
-        total_invoices = Invoice.objects.filter(invoice_date__month=current_month, invoice_date__year=current_year)
+        total_invoices = PurchaseInvoice.objects.filter(invoice_date__month=current_month, invoice_date__year=current_year)
         total_invoice_amount = total_invoices.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
         total_invoice_paid = total_invoices.aggregate(Sum('paid_amount'))['paid_amount__sum'] or 0
         total_invoice_due = total_invoice_amount - total_invoice_paid
@@ -930,7 +930,7 @@ class DashboardView(TemplateView):
 
 
         # Daily Invoices
-        today_invoices = Invoice.objects.filter(invoice_date=date.today())
+        today_invoices = PurchaseInvoice.objects.filter(invoice_date=date.today())
         daily_invoice_amount = today_invoices.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
 
         context.update({

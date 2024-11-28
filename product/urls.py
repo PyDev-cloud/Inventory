@@ -28,11 +28,12 @@ urlpatterns = [
     path('customerUpdate/<int:pk>/edit/',CustomerUpdateView.as_view(),name="customerupdate"),
     
 
-    path('purchase/',PurchaseCreate.as_view(),name="purchase"),
-    path('purchase/create/', PurchaseCreate.as_view(), name='purchase_create'),
+    path('purchase/create/', PurchaseCreateView.as_view(), name='purchase_create'),
+    path('purchase/invoice/<int:invoice_id>/', PurchaseInvoiceDetailView.as_view(), name='purchase_invoice_detail'),
+    #path('purchase/create/', PurchaseCreate.as_view(), name='purchase_create'),
     path('purchase/receipt/<int:purchase_id>/', InvoiceView.as_view(), name="purchase_receipt"),  # Show a specific receipt
     path("purchaseList/",PurchaseListView.as_view(),name="purchaseList"),
-    path('purchase/create/<int:product_id>/', PurchaseCreate.as_view(), name='Reorder'),
+    #path('purchase/create/<int:product_id>/', PurchaseCreate.as_view(), name='Reorder'),
 
 
 

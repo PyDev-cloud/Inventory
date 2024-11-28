@@ -62,7 +62,8 @@ class Stock(models.Model):
 
     def add_stock(self, quantity):
         """Increase stock quantity based on the purchase quantity."""
-        self.quantity += quantity
+        self.quantity+= quantity # Simply add the exact purchase quantity
+          # Simply add the exact purchase quantity
         self.save()
 
     def reduce_stock(self, quantity):
@@ -76,18 +77,15 @@ class Stock(models.Model):
     def get_available_stock(self):
         """Return the current stock quantity."""
         return self.quantity
-
-
-class Invoice(models.Model):
+class PurchaseInvoice(models.Model):
     
-    invoice_number = models.CharField(max_length=50, unique=True)  # Unique invoice number
+    invoice_number = models.CharField(max_length=50, unique=True)
     invoice_date = models.DateField(auto_now_add=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    paid_amount = models.DecimalField(max_digits=10, decimal_places=2)  # Total amount of the invoice (for purchase or sale)
-    discount = models.FloatField()  # Discount applied (if any)
-    due_amount = models.FloatField()  # Due amount
+    paid_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    discount = models.FloatField()
+    due_amount = models.FloatField()
     status = models.CharField(max_length=20, choices=[('Paid', 'Paid'), ('Due', 'Due')], default='Due')
-    
     
     def __str__(self):
         return self.invoice_number
@@ -97,36 +95,51 @@ class Invoice(models.Model):
         super().save(*args, **kwargs)
 
 
+
 class Purchase(models.Model):
-    productname=models.ForeignKey(Product,related_name="Product",on_delete=models.CASCADE)
-    suppliername=models.ForeignKey(Supplier,related_name="supplier",on_delete=models.CASCADE)
-    quantity=models.IntegerField()
-    totalAmount=models.DecimalField(max_digits=10, decimal_places=2)
-    discount=models.DecimalField(max_digits=10, decimal_places=2)
-    dueAmount=models.DecimalField(max_digits=10, decimal_places=2)
-    paidAmount=models.DecimalField(max_digits=10, decimal_places=2)
-    create_at=models.DateField(auto_now=True)
-    update_at=models.DateField(auto_now=True)
-    invoice = models.ForeignKey(Invoice, related_name="purchases", on_delete=models.CASCADE)  # Link to Invoice
+    productname = models.ForeignKey(Product, related_name="Product", on_delete=models.CASCADE)
+    suppliername = models.ForeignKey(Supplier, related_name="supplier", on_delete=models.CASCADE)
+    quantity = models.IntegerField()
+    totalAmount = models.DecimalField(max_digits=10, decimal_places=2)
+    discount = models.DecimalField(max_digits=10, decimal_places=2)
+    dueAmount = models.DecimalField(max_digits=10, decimal_places=2)
+    paidAmount = models.DecimalField(max_digits=10, decimal_places=2)
+    create_at = models.DateField(auto_now=True)
+    update_at = models.DateField(auto_now=True)
+    invoice = models.ForeignKey(PurchaseInvoice, related_name="purchase", on_delete=models.CASCADE, null=True, blank=True)  # Link to Invoice
 
     def save(self, *args, **kwargs):
-        if not self.invoice:
-            invoice = Invoice.objects.create(
-                invoice_number=str(uuid.uuid4()),  # Generate a unique invoice number
-                total_amount=self.total_amount,
-                discount=self.discount,
-                paid_amount=self.paid_amount,
-            )
-            self.invoice = invoice
-           
         # Automatically calculate totalAmount and dueAmount before saving
-        self.totalAmount =(self.productname.purchase_price- self.discount) * self.quantity  # Total = Price * Quantity
-        self.dueAmount = self.totalAmount - self.paidAmount   # Due = Total - Paid - Discount
-         # Add stock when purchase is made
-        stock, created = Stock.objects.get_or_create(product=self.productname)
-        stock.add_stock(self.quantity)  # Increase stock based on purchase quantity
+        self.totalAmount = (self.productname.purchase_price - self.discount) * self.quantity
+        self.dueAmount = self.totalAmount - self.paidAmount
 
-        super(Purchase, self).save(*args, **kwargs)
+        # Add stock when purchase is made
+        stock, created = Stock.objects.get_or_create(product=self.productname)
+        stock.add_stock(self.quantity) # Add stock based on purchase quantity 
+
+        # Check if an invoice already exists for this purchase, if not, create one and link it to the purchase
+        if not self.invoice:  # Ensure only one invoice is created, and it's linked to the Purchase instance
+            invoice = PurchaseInvoice.objects.create(
+                invoice_number=str(uuid.uuid4()),  # Generate a unique invoice number
+                total_amount=self.totalAmount,
+                discount=self.discount,
+                paid_amount=self.paidAmount,
+            )
+            self.invoice = invoice  # Assign the created invoice to the Purchase instance
+
+        super(Purchase, self).save(*args, **kwargs) 
+
+    def delete(self, *args, **kwargs):
+        # Before deleting the purchase, reduce stock by the quantity of the purchase
+        stock = Stock.objects.get(product=self.productname)
+        stock.reduce_stock(self.quantity)  # Reduce stock based on purchase quantity
+
+        super(Purchase, self).delete(*args, **kwargs)
+        # Automatically create PurchaseInvoice when purchase is saved
+        
+
+    def __str__(self):
+        return f'Purchase of {self.productname.name} from {self.suppliername.name}'
     
 
 
@@ -143,50 +156,45 @@ class Customer(models.Model):
 
 
 class Selles(models.Model):
-    product=models.ForeignKey(Product,related_name="ProductP",on_delete=models.CASCADE)
-    quantity=models.IntegerField()
-    customer=models.ForeignKey(Customer,related_name="customerC",on_delete=models.CASCADE)
-    totalPrice=models.DecimalField(max_digits=10, decimal_places=2)
-    discountAmount=models.DecimalField(max_digits=10, decimal_places=2)
-    paidAmount=models.DecimalField(max_digits=10, decimal_places=2)
-    DueAmount=models.IntegerField()
-    create_at=models.DateField(auto_now=True)
-    update_at=models.DateField(auto_now=True)
-    invoice = models.ForeignKey(Invoice, related_name="sales", on_delete=models.CASCADE)  # Link to Invoice
+    product = models.ForeignKey(Product, related_name="ProductP", on_delete=models.CASCADE)
+    quantity = models.IntegerField()
+    customer = models.ForeignKey(Customer, related_name="customerC", on_delete=models.CASCADE)
+    totalPrice = models.DecimalField(max_digits=10, decimal_places=2)
+    discountAmount = models.DecimalField(max_digits=10, decimal_places=2)
+    paidAmount = models.DecimalField(max_digits=10, decimal_places=2)
+    DueAmount = models.IntegerField()
+    create_at = models.DateField(auto_now=True)
+    update_at = models.DateField(auto_now=True)
+    invoice = models.ForeignKey(PurchaseInvoice, related_name="sales", on_delete=models.CASCADE)  # Link to Invoice
     profit = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     
     def save(self, *args, **kwargs):
+        # Ensure the invoice is created automatically if not exists
         if not self.invoice:
-            invoice = Invoice.objects.create(
+            invoice = PurchaseInvoice.objects.create(
                 invoice_number=str(uuid.uuid4()),  # Generate a unique invoice number
-                total_amount=self.total_price,
-                discount=self.discount_amount,
-                paid_amount=self.paid_amount,
+                total_amount=self.totalPrice,
+                discount=self.discountAmount,
+                paid_amount=self.paidAmount,
             )
             self.invoice = invoice
-        # Calculate totalPrice (product price * quantity, assuming quantity field exists in Product or Selles)
-        if self.product:  # Ensure the product exists
-            self.totalPrice = (self.product.sale_price- self.discountAmount) * self.quantity  # assuming product has a price field
+        
+        # Calculate totalPrice (product price * quantity)
+        if self.product:
+            self.totalPrice = (self.product.sale_price - self.discountAmount) * self.quantity
 
-        # Calculate dueAmount: totalPrice - paidAmount - discountAmount
-        self.DueAmount = self.totalPrice - self.paidAmount 
+        # Calculate DueAmount: totalPrice - paidAmount - discountAmount
+        self.DueAmount = self.totalPrice - self.paidAmount
 
-         # Reduce stock when sale is made
+        # Reduce stock when sale is made
         stock = Stock.objects.get(product=self.product)
         stock.reduce_stock(self.quantity)  # Decrease stock based on sale quantity
 
-
-
-        #For Profit Calculation 
+        # For Profit Calculation 
         product = self.product
         purchase_price = product.purchase_price
-        
-        # Calculate the profit (purchase_price - totalPrice)
-        # Assuming you want the profit for the total sale, not just for one unit
-        # If you are selling multiple quantities, the total profit will be multiplied by quantity
         self.profit = Decimal(purchase_price) * self.quantity - self.totalPrice
         
-        # Call the parent class's save method
         super(Selles, self).save(*args, **kwargs)
 
     def __str__(self):

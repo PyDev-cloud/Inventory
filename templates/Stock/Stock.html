@@ -80,7 +80,7 @@
       <td>{{ c.quantity }}</td>
       <td>{{ c.created_at }}</td>
       <td>
-        <a href="{% url 'Reorder' c.product.pk %}" class="btn btn-info"
+        {% comment %} <a href="{% url 'Reorder' c.product.pk %}" class="btn btn-info" {% endcomment %}
           >Reorder</a
         >
       </td>
