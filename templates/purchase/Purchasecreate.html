@@ -1,62 +1,69 @@
-{% extends "../navbar.html" %} {% load static %} {% block content %}
-<div class="d-flex justify-content-center align-items-center vh-100">
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-md-6">
-        <h2 class="text-center mb-4">Create Product</h2>
-<form method="post" enctype="multipart/form-data" >
-  {% csrf_token %}
-    <div class="row ">
-      <div class="col-md-4 ">
-          <div class="mb-3">
-              <label for="id_name" class="form-label">Product Name</label>
-              {{ form.productname }}
-          </div>
-      </div>
-      <div class="col-md-4 ">
-          <div class="mb-3">
-              <label for="id_thumbnail_image" class="form-label">Thumbnail Image</label>
-              {{ form.suppliername }}
-          </div>
-      </div>
-  </div>
+{% extends "../navbar.html" %}
+{% load static %}
 
-  <div class="row">
-      <div class="col-md-4">
-          <div class="mb-3">
-              <label for="id_quantity" class="form-label">Quantity</label>
-              {{ form.quantity}}
-          </div>
-      </div>
-      <div class="col-md-4">
-          <div class="mb-3">
-              <label for="id_purchase_price" class="form-label">Purchase Price</label>
-              {{ form.discount }}
-          </div>
-      </div>
-  </div>
+{% block content %}
 
-  <div class="row ">
-      <div class="col-md-4">
-          <div class="mb-3">
-              <label for="id_sale_price" class="form-label">Sale Price</label>
-              {{ form.paidAmount}}
-          </div>
-      </div>
-      
-  </div>
- 
+<form method="POST" id="purchase-form">
+    {% csrf_token %}
 
-  <div class="mb-3">
-      <button type="submit" class="btn btn-primary">
-          {% if form.instance.pk %}Update{% else %}Create{% endif %}
-      </button>
-      <a href="{% url "productlist" %}" class="btn btn-secondary">Cancel</a>
-  </div>
-</form>
-</div>
+    {{ form.as_p }}
+
+    <h3>Purchase Items</h3>
+    <!-- Render the management form correctly -->
+    <div id="purchase-item-forms">
+        {{ purchase_item_formset.management_form }}  <!-- This must be rendered correctly before the forms -->
+
+        <!-- Render the individual forms -->
+        {% for form in purchase_item_formset %}
+            <div class="form-row">
+                {{ form.as_p }}
+            </div>
+        {% endfor %}
     </div>
-  </div>
-</div>
 
-{% endblock content %}
+    <!-- Button to add another product -->
+    <button type="button" id="add-item-button">Add another product</button>
+
+    <!-- Submit the purchase form -->
+    <button type="submit">Save Purchase</button>
+</form>
+
+<script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function() {
+        // Button to add new product form
+        document.getElementById("add-item-button").addEventListener("click", function() {
+            // Get the current form count
+            var formCount = document.querySelectorAll('.form-row').length;
+            
+
+            // Get the management form
+            var managementForm = document.querySelector("#id_form-TOTAL_FORMS");
+            console.log(managementForm)
+            if (!managementForm) {
+                console.error("Management form not found!");
+                return;  // Exit if management form is missing
+            }
+
+            // Increment the form count
+            var newFormCount = parseInt(managementForm.value) + 1;
+            managementForm.value = newFormCount;  // Update the TOTAL_FORMS field
+
+            // Get the first form to clone (the last form in the current formset)
+            var newForm = document.querySelector('.form-row').cloneNode(true);
+
+            // Update the form's index
+            var formFields = newForm.querySelectorAll('input, select, textarea');
+            formFields.forEach(function(field) {
+                var name = field.name;
+                var newName = name.replace(/-0-/, `-${newFormCount}-`);
+                field.name = newName;
+                field.id = "id_" + newName;  // Update the field's id as well
+            });
+
+            // Append the cloned form to the container
+            document.getElementById("purchase-item-forms").appendChild(newForm);
+        });
+    });
+</script>
+
+{% endblock %}

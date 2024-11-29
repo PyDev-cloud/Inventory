@@ -1,16 +1,15 @@
-{% extends "../navbar.html" %} {% load static %} {% block content %}
+{% extends "../navbar.html" %} {% load static %} {% block content %} 
 {% if messages %}
-    <ul>
-        {% for message in messages %}
-            <li>{{ message }}</li>
-        {% endfor %}
-    </ul>
+<ul>
+  {% for message in messages %}
+  <li>{{ message }}</li>
+  {% endfor %}
+</ul>
 {% endif %}
 <div class="d-flex justify-content-center align-items-center vh-100">
-  
   <div class="container">
     <div class="row justify-content-center">
-      <div class="col-md-6">
+      <div class="col-md-5 mr-4">
         <h2 class="text-center mb-4">Create Supplier</h2>
         <form method="post">
           {% csrf_token %} {{ category_form.as_p }}
@@ -20,8 +19,8 @@
           </button>
         </form>
       </div>
-      <div class="col-md-4">
-        <h2 class="mb-4">Upload (Excel)</h2>
+      <div class="col-md-5 ml-5">
+        <h3 class="mb-4">Upload CSV or Excel File</h3>
         <a href="#">Download Sample File</a>
         <form method="post" enctype="multipart/form-data">
           {% csrf_token %} {{ file_form.as_p }}

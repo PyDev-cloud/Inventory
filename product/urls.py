@@ -16,7 +16,7 @@ urlpatterns = [
     path('subcategory/<int:pk>/edit/',SubCategoryUpdateView.as_view(),name="subcategoryupdate"),
   
     
-    path('product/', ProductView.as_view(), name='product'),
+    path('product/', ProductCreateView.as_view(), name='product'),
     path('productList/',Productlist.as_view(),name="productlist"),
     path('productUpdate/<int:pk>/edit/',ProductUpdateView.as_view(),name="productupdate"),
 
@@ -38,7 +38,8 @@ urlpatterns = [
 
 
 
-    path('sale/create/', SellesCreateView.as_view(), name='create_sell'),  # URL for creating a new sale
+    path('selles/', SellesListView.as_view(), name='selles_list'),
+    path('selles/create/', SellesCreateView.as_view(), name='selles_create'),
 
 
     path('StockList/', StockView.as_view(), name='stocklist'),

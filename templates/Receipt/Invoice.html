@@ -1,0 +1,127 @@
+{% extends '../navbar.html' %}
+
+{% block content %}
+
+
+
+<div class="container">
+    <h2 class="text-center">Invoice: {{ invoice.invoice_number }}</h2>
+    <p><strong>Date:</strong> {{ invoice.invoice_date }}</p>
+    <p><strong>Total Amount:</strong> {{ invoice.total_amount }}</p>
+    <p><strong>Paid Amount:</strong> {{ invoice.paid_amount }}</p>
+    <p><strong>Discount:</strong> {{ invoice.discount }}</p>
+    <p><strong>Due Amount:</strong> {{ invoice.due_amount }}</p>
+    <p><strong>Status:</strong> {{ invoice.status }}</p>
+
+    <hr>
+
+    <h4>Purchase Details</h4>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Product Name</th>
+                <th>Quantity</th>
+                <th>Total Amount</th>
+                <th>Discount</th>
+                <th>Paid Amount</th>
+                <th>Due Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for purchase in purchases %}
+            <tr>
+                <td>{{ purchase.productname.name }}</td>
+                <td>{{ purchase.quantity }}</td>
+                <td>{{ purchase.totalAmount }}</td>
+                <td>{{ purchase.discount }}</td>
+                <td>{{ purchase.paidAmount }}</td>
+                <td>{{ purchase.dueAmount }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <hr>
+
+    <div class="text-center">
+        <button onclick="window.print()" class="btn btn-primary">Print Invoice</button>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+<div class="container">
+    <h2 class="text-center">Invoice</h2>
+
+    <!-- Invoice Header -->
+    <div class="row">
+        <div class="col-md-6">
+            <h4>Invoice Number: {{ invoice.invoice_number }}</h4>
+            <p><strong>Date:</strong> {{ invoice.invoice_date }}</p>
+        </div>
+        <div class="col-md-6 text-right">
+            <h4>Billing Information:</h4>
+            {% for purchase in purchases %}
+            <p>{{ purchases.suppliername.name }}</p>
+            <p>{{ invoice.billing_address }}</p>
+            <p>{{ invoice.billing_phone }}</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- Product Details -->
+    <h4>Product Details:</h4>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Product Name</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for purchase in purchases %}
+            <tr>
+                <td>{{ purchase.productname.name }}</td>
+                <td>{{ purchase.quantity }}</td>
+                <td>{{ purchase.totalAmount }}</td>
+                <td>{{ purchase.discount }}</td>
+                <td>{{ purchase.paidAmount }}</td>
+                <td>{{ purchase.dueAmount }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <hr>
+
+    <!-- Invoice Totals -->
+    <div class="row">
+        <div class="col-md-6">
+            <p><strong>Total Before Discount:</strong> {{ invoice.total_amount }}</p>
+            <p><strong>Discount:</strong> {{ invoice.discount }}</p>
+        </div>
+        <div class="col-md-6 text-right">
+            <p><strong>Paid Amount:</strong> {{ invoice.paid_amount }}</p>
+            <p><strong>Due Amount:</strong> {{ invoice.due_amount }}</p>
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- Footer -->
+    <div class="row">
+        <div class="col-md-12 text-center">
+            <p><strong>Thank you for your purchase!</strong></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

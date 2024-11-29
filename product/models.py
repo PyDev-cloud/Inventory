@@ -50,73 +50,51 @@ class Supplier(models.Model):
         return self.name
     
 
+class Customer(models.Model):
+    name=models.CharField(max_length=100)
+    Email=models.EmailField(max_length=100)
+    Mobile=models.CharField(max_length=14)
+    Address=models.CharField(max_length=100)
 
+    def __str__(self):
+        return self.name
 
 class Stock(models.Model):
     product = models.ForeignKey(Product, related_name="stock", on_delete=models.CASCADE)
     quantity = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
+   
 
-    def __str__(self):
-        return f"Stock for {self.product.name}"
-
-    def add_stock(self, quantity):
-        """Increase stock quantity based on the purchase quantity."""
-        self.quantity+= quantity # Simply add the exact purchase quantity
-          # Simply add the exact purchase quantity
-        self.save()
-
-    def reduce_stock(self, quantity):
-        """Reduce stock quantity based on the sale quantity."""
-        if self.quantity >= quantity:
-            self.quantity -= quantity
-            self.save()
-        else:
-            raise ValueError(f"Not enough stock for {self.product.name}. Available: {self.quantity}")
-
-    def get_available_stock(self):
-        """Return the current stock quantity."""
-        return self.quantity
-class PurchaseInvoice(models.Model):
     
-    invoice_number = models.CharField(max_length=50, unique=True)
-    invoice_date = models.DateField(auto_now_add=True)
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    paid_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    discount = models.FloatField()
-    due_amount = models.FloatField()
-    status = models.CharField(max_length=20, choices=[('Paid', 'Paid'), ('Due', 'Due')], default='Due')
+# class PurchaseInvoice(models.Model):
     
-    def __str__(self):
-        return self.invoice_number
+#     invoice_number = models.CharField(max_length=50, unique=True)
+#     invoice_date = models.DateField(auto_now_add=True)
+#     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+#     paid_amount = models.DecimalField(max_digits=10, decimal_places=2)
+#     discount = models.FloatField()
+#     due_amount = models.FloatField()
+#     status = models.CharField(max_length=20, choices=[('Paid', 'Paid'), ('Due', 'Due')], default='Due')
+    
+#     def __str__(self):
+#         return self.invoice_number
 
-    def save(self, *args, **kwargs):
-        self.due_amount = self.total_amount - self.paid_amount
-        super().save(*args, **kwargs)
+#     def save(self, *args, **kwargs):
+#         self.due_amount = self.total_amount - self.paid_amount
+#         super().save(*args, **kwargs)
 
 
 
 class Purchase(models.Model):
-    productname = models.ForeignKey(Product, related_name="Product", on_delete=models.CASCADE)
-    suppliername = models.ForeignKey(Supplier, related_name="supplier", on_delete=models.CASCADE)
-    quantity = models.IntegerField()
-    totalAmount = models.DecimalField(max_digits=10, decimal_places=2)
-    discount = models.DecimalField(max_digits=10, decimal_places=2)
-    dueAmount = models.DecimalField(max_digits=10, decimal_places=2)
-    paidAmount = models.DecimalField(max_digits=10, decimal_places=2)
-    create_at = models.DateField(auto_now=True)
-    update_at = models.DateField(auto_now=True)
-    invoice = models.ForeignKey(PurchaseInvoice, related_name="purchase", on_delete=models.CASCADE, null=True, blank=True)  # Link to Invoice
+    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
+    discount = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    paidAmount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    totalAmount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    dueAmount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    invoice = models.OneToOneField('PurchaseInvoice', null=True, blank=True, on_delete=models.SET_NULL)
 
     def save(self, *args, **kwargs):
-        # Automatically calculate totalAmount and dueAmount before saving
-        self.totalAmount = (self.productname.purchase_price - self.discount) * self.quantity
-        self.dueAmount = self.totalAmount - self.paidAmount
-
-        # Add stock when purchase is made
-        stock, created = Stock.objects.get_or_create(product=self.productname)
-        stock.add_stock(self.quantity) # Add stock based on purchase quantity 
-
+        
         # Check if an invoice already exists for this purchase, if not, create one and link it to the purchase
         if not self.invoice:  # Ensure only one invoice is created, and it's linked to the Purchase instance
             invoice = PurchaseInvoice.objects.create(
@@ -127,31 +105,45 @@ class Purchase(models.Model):
             )
             self.invoice = invoice  # Assign the created invoice to the Purchase instance
 
-        super(Purchase, self).save(*args, **kwargs) 
-
-    def delete(self, *args, **kwargs):
-        # Before deleting the purchase, reduce stock by the quantity of the purchase
-        stock = Stock.objects.get(product=self.productname)
-        stock.reduce_stock(self.quantity)  # Reduce stock based on purchase quantity
-
-        super(Purchase, self).delete(*args, **kwargs)
-        # Automatically create PurchaseInvoice when purchase is saved
-        
+        super(Purchase, self).save(*args, **kwargs)  # Save purchase
 
     def __str__(self):
-        return f'Purchase of {self.productname.name} from {self.suppliername.name}'
+        return f'Purchase of {self.supplier.name}'
+    def __str__(self):
+        return f'Purchase of {self.supplier.name}'
+
+
+
     
+class PurchaseItem(models.Model):
+    purchase = models.ForeignKey(Purchase, related_name='purchase_items', on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    totalAmount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
+    def save(self, *args, **kwargs):
+        # Calculate totalAmount (quantity * unit_price)
+        self.totalAmount = self.quantity * self.unit_price
 
-
-class Customer(models.Model):
-    name=models.CharField(max_length=100)
-    Email=models.EmailField(max_length=100)
-    Mobile=models.CharField(max_length=14)
-    Address=models.CharField(max_length=100)
+        stock, created = Stock.objects.get_or_create(product=self.product)  # Get or create the Stock entry
+        stock.quantity += self.quantity  # Increase the stock by the purchased quantity
+        stock.save()  # Save the updated stock
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return self.name
+        return f"{self.quantity} x {self.product.name}"
+
+class PurchaseInvoice(models.Model):
+    invoice_number = models.CharField(max_length=100, unique=True)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    discount = models.DecimalField(max_digits=5, decimal_places=2)
+    paid_amount = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        
+        return f"Invoice #{self.invoice_number}"
+    
     
 
 
@@ -181,15 +173,11 @@ class Selles(models.Model):
         
         # Calculate totalPrice (product price * quantity)
         if self.product:
-            self.totalPrice = (self.product.sale_price - self.discountAmount) * self.quantity
+            self.totalPrice = Decimal(self.product.sale_price - self.discountAmount) * self.quantity
 
         # Calculate DueAmount: totalPrice - paidAmount - discountAmount
         self.DueAmount = self.totalPrice - self.paidAmount
-
-        # Reduce stock when sale is made
-        stock = Stock.objects.get(product=self.product)
-        stock.reduce_stock(self.quantity)  # Decrease stock based on sale quantity
-
+        
         # For Profit Calculation 
         product = self.product
         purchase_price = product.purchase_price
@@ -203,4 +191,5 @@ class Selles(models.Model):
 
 
 
-    
+
+

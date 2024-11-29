@@ -16,6 +16,7 @@ from django.urls import reverse_lazy
 from datetime import datetime
 from datetime import date
 from django.db.models.functions import TruncMonth
+from django.db import transaction
 
 
 
@@ -339,35 +340,26 @@ class Productlist(ListView):
             context["product"] = self.model.objects.all()
             return context
 
-class ProductView(View):
+class ProductCreateView(CreateView):
+    model = Product
     form_class = ProductForm
-    template_name = "product/productcreate.html"
+    template_name = 'product/productcreate.html'  # Your template to render the form
+    success_url = reverse_lazy('productlist')  # Redirect to the product list after creation
 
-    def get(self, request, *args, **kwargs):
-        form = self.form_class()
-        context = {
-            "form": form,
-            "categories": Category.objects.all(),  # Call .all() to get the queryset
-            "subcategories": SubCategory.objects.all(),  # Call .all() to get the queryset
-        }
-        return render(request, self.template_name, context)
+    def form_valid(self, form):
+        # You can add extra logic here if needed before saving the form
+        return super().form_valid(form)
 
-    def post(self, request, *args, **kwargs):
-        form = self.form_class(request.POST)
-        if form.is_valid():  # Check if the form is valid
-            form.save()  # Save the product
-            messages.success(request, "Product created successfully!")  # Success message
-            return redirect('success')  # Redirect to a success page or another view
-        else:
-            messages.error(request, "Please correct the errors below.")  # Error message
+# Update a Product (for editing an existing product)
+class ProductUpdateView(UpdateView):
+    model = Product
+    form_class = ProductForm
+    template_name = 'product/productcreate.html'  # Your template to render the form
+    success_url = reverse_lazy('productlist')  # Redirect to the product list after update
 
-        context = {
-            "form": form,
-            "categories": Category.objects.all(),
-            "subcategories": SubCategory.objects.all(),
-        }
-        return render(request, self.template_name, context)  # Render the form with errors
-
+    def form_valid(self, form):
+        # Add additional logic here if needed before saving the updated form
+        return super().form_valid(form)
 
 
 class ProductUpdateView(UpdateView):
@@ -481,42 +473,72 @@ class InvoiceView(TemplateView):
 
 class PurchaseCreateView(CreateView):
     model = Purchase
-    form_class = PurchaseForm  # Assume you have a form for Purchase model
-    template_name = 'purchase/Purchasecreate.html'  # The template where the form is shown
-    success_url = reverse_lazy('purchaseList')  # Redirect to the list of purchases after success
+    form_class = PurchaseForm
+    template_name = 'purchase/Purchasecreate.html'
+    success_url = reverse_lazy('purchaseList')
 
     def form_valid(self, form):
-        # First, save the Purchase object to ensure it's created
-        self.object = form.save()
+        # Start a transaction to ensure atomicity
+        with transaction.atomic():
+            # Save the Purchase object first
+            self.object = form.save()
 
-        # Create the associated PurchaseInvoice automatically
-        invoice = PurchaseInvoice.objects.create(
-            invoice_number=str(uuid.uuid4()),  # Generate a unique invoice number
-            total_amount=self.object.totalAmount,
-            discount=self.object.discount,
-            paid_amount=self.object.paidAmount,
-            due_amount=self.object.dueAmount,  # Calculate based on the purchase
-        )
+            # Create or get the PurchaseItem formset based on the current Purchase instance
+            purchase_item_formset = PurchaseItemFormSet(self.request.POST, queryset=PurchaseItem.objects.filter(purchase=self.object))
+            
+            if purchase_item_formset.is_valid():
+                # Set the purchase for each form in the formset
+                for form in purchase_item_formset:
+                    form.instance.purchase = self.object
 
-        # Link the invoice to the purchase
-        self.object.invoice = invoice  # Set the invoice for this purchase
+                # Save the formset
+                purchase_item_formset.save()
 
-        # Save the purchase object (now with the invoice linked)
-        self.object.save()
+                # Calculate total and due amounts
+                self.object.totalAmount = sum([item.totalAmount for item in self.object.purchase_items.all()])
+                self.object.dueAmount = self.object.totalAmount - self.object.paidAmount
+                self.object.save()
 
-        # Redirect to the Purchase Invoice detail page
-        return redirect('purchase_invoice_detail', invoice_id=invoice.id)
+                # Create the PurchaseInvoice if not already created
+                if not self.object.invoice:
+                    invoice = PurchaseInvoice.objects.create(
+                        invoice_number=str(uuid.uuid4()),
+                        total_amount=self.object.totalAmount,
+                        discount=self.object.discount,
+                        paid_amount=self.object.paidAmount,
+                    )
+                    self.object.invoice = invoice
+                    self.object.save()
+
+                # Redirect to the invoice detail page
+                return redirect('purchase_invoice_detail', invoice_id=self.object.invoice.id)
+
+        return self.render_to_response(self.get_context_data(form=form, purchase_item_formset=purchase_item_formset))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Initialize the PurchaseItem formset
+        if self.object:
+            context['purchase_item_formset'] = PurchaseItemFormSet(queryset=self.object.purchase_items.all())
+        else:
+            context['purchase_item_formset'] = PurchaseItemFormSet(queryset=PurchaseItem.objects.none())  # Empty formset for new purchases
+
+        return context
 
 # Create a view to show the Purchase Invoice
 class PurchaseInvoiceDetailView(CreateView):
-    model = PurchaseInvoice
-    template_name = 'Dashboard/dashboard.html'  # The template where the invoice is shown
+    model = Purchase
+    template_name = 'Receipt/Invoice.html'  # The template where the invoice is shown
     form_class=PurchaseInvoiceForm
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         invoice_id = self.kwargs['invoice_id']
         invoice = PurchaseInvoice.objects.get(id=invoice_id)
         context['invoice'] = invoice
+
+        purchases = Purchase.objects.filter(invoice=invoice)
+        context['purchases'] = purchases
         return context
     
 
@@ -529,7 +551,16 @@ class PurchaseListView(ListView):
             return context
 
 
-     
+
+
+class SellesListView(ListView):
+    model = Selles
+    template_name = 'Sells/SellesList.html'  # Template to render the list
+    context_object_name = 'sales'  # Context variable name for the list
+
+    # You can add pagination if needed
+    paginate_by = 10  # Adjust the number of items per page if required
+    
 
 
 class SellesCreateView(CreateView):
@@ -555,7 +586,33 @@ class SellesCreateView(CreateView):
         form.instance.totalPrice = totalPrice
         form.instance.dueAmount = dueAmount
 
-        # Save the form data
+        # Calculate profit (if applicable)
+        form.instance.profit = (product.purchase_price * quantity) - totalPrice
+
+        # Update stock when a product is sold
+         # Get the stock for this product and decrement the quantity
+        stock, created = Stock.objects.get_or_create(product=product)
+        
+        if stock.quantity >= quantity:
+            stock.quantity -= quantity  # Decrease the stock by sold quantity
+            stock.save()  # Save the updated stock
+        else:
+            form.add_error('quantity', 'Not enough stock available for this sale.')  # Add form error if insufficient stock
+            return self.form_invalid(form)  # Return the invalid form if stock is insufficient
+
+        # Create the associated PurchaseInvoice (if needed)
+        invoice = PurchaseInvoice.objects.create(
+            invoice_number=str(uuid.uuid4()),  # Generate a unique invoice number
+            total_amount=totalPrice,
+            discount=discountAmount,
+            paid_amount=paidAmount,
+            due_amount=dueAmount,  # Calculate due based on the sale
+        )
+
+        # Link the invoice to the sale
+        form.instance.invoice = invoice  # Set the invoice for this sale
+
+        # Save the sale object (now with the invoice linked)
         return super().form_valid(form)
 
     def form_invalid(self, form):
