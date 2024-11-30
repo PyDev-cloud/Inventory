@@ -118,20 +118,30 @@ class CustomarForm(forms.ModelForm):
 #         return cleaned_data
     
 
-class SellesForm(forms.ModelForm):
+# class SellesForm(forms.ModelForm):
+#     class Meta:
+#         model = Selles
+#         fields = [ 'customer', 'discountAmount', 'paidAmount','dueAmount']
+#         widgets = {
+#             'customer': forms.Select(attrs={'class': 'form-control form-control-lg', 'style': 'font-size: 16px;'}),
+#             'discountAmount': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name','style': 'font-size: 16px;'}),
+#             'paidAmount': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name','style': 'font-size: 16px;'}),
+#             'dueAmount':forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name','style': 'font-size: 16px;'}),
+#         }
+#     def __init__(self, *args, **kwargs):
+#         super(SellesForm, self).__init__(*args, **kwargs)
+
+class SeelsForm(forms.ModelForm):
     class Meta:
         model = Selles
-        fields = ['product', 'customer', 'quantity', 'discountAmount', 'paidAmount']
-        widgets = {
-            'product': forms.Select(attrs={'class': 'form-control form-control-lg','style': 'font-size: 16px;'}),
-            'customer': forms.Select(attrs={'class': 'form-control form-control-lg', 'style': 'font-size: 16px;'}),
-            'quantity': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name','style': 'font-size: 16px;'}),
-            'discountAmount': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name','style': 'font-size: 16px;'}),
-            'paidAmount': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name','style': 'font-size: 16px;'}),
+        fields = ['customer', 'discountAmount', 'paidAmount']  
 
-        }
-    def __init__(self, *args, **kwargs):
-        super(SellesForm, self).__init__(*args, **kwargs)
+
+SellesItemFormSet = modelformset_factory(
+    SellesItem,  
+    fields=['product', 'quantity', 'unit_price'],  
+    extra=1, 
+)
 
 
 class FileUploadForm(forms.Form):
@@ -151,13 +161,11 @@ class PurchaseInvoiceForm(forms.ModelForm):
 class PurchaseForm(forms.ModelForm):
     class Meta:
         model = Purchase
-        fields = ['supplier', 'discount', 'paidAmount']  # প্রয়োজনীয় ক্ষেত্রসমূহ
+        fields = ['supplier', 'discount', 'paidAmount']  
 
-    # এখানে আপনি কাস্টম ভ্যালিডেশন বা উইজেট যুক্ত করতে পারেন
-
-# PurchaseItemFormSet (একাধিক পণ্য আইটেম ফর্ম)
+# PurchaseItemFormSet 
 PurchaseItemFormSet = modelformset_factory(
-    PurchaseItem,  # PurchaseItem মডেল
-    fields=['product', 'quantity', 'unit_price'],  # পণ্য, পরিমাণ এবং একক মূল্য
-    extra=1,  # আরো একটি ফর্ম প্রদর্শন করতে
+    PurchaseItem, 
+    fields=['product', 'quantity', 'unit_price'], 
+    extra=1,  
 )

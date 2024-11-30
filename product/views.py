@@ -565,59 +565,52 @@ class SellesListView(ListView):
 
 class SellesCreateView(CreateView):
     model = Selles
-    form_class = SellesForm
-    template_name = 'Sells/SellsCreate.html'  # Replace with your template's name
-    success_url = reverse_lazy('selles_list')  # Redirect after a successful submission (adjust URL as needed)
+    form_class = SeelsForm
+    template_name = 'Sells/SellsCreate.html'
+    success_url = reverse_lazy('')
 
     def form_valid(self, form):
-        # Extract data from the form
-        product = form.cleaned_data['product']
-        quantity = form.cleaned_data['quantity']
-        discountAmount = form.cleaned_data['discountAmount']
-        paidAmount = form.cleaned_data['paidAmount']
+        with transaction.atomic():
+            self.object = form.save()
 
-        # Calculate totalPrice (product price * quantity)
-        totalPrice = product.sale_price * quantity
+            # Correct relationship with 'selles' field
+            selles_item_formset = SellesItemFormSet(self.request.POST, queryset=SellesItem.objects.filter(selles=self.object))
 
-        # Calculate dueAmount (totalPrice - paidAmount - discountAmount)
-        dueAmount = totalPrice - paidAmount - discountAmount
+            if selles_item_formset.is_valid():
+                for form in selles_item_formset:
+                    form.instance.selles = self.object
+                selles_item_formset.save()
 
-        # Set the calculated values on the form instance
-        form.instance.totalPrice = totalPrice
-        form.instance.dueAmount = dueAmount
+                # Calculate total and due amounts
+                total_amount = sum([item.totalAmount for item in self.object.selles_items.all()])
+                paid_amount = self.object.paidAmount if self.object.paidAmount else Decimal('0.00')
+                self.object.totalAmount = total_amount
+                self.object.dueAmount = total_amount - paid_amount
+                self.object.save()
+                if not self.object.invoice:
+                    invoice = PurchaseInvoice.objects.create(
+                        invoice_number=str(uuid.uuid4()),
+                        total_amount=self.object.totalAmount,
+                        discount=self.object.discount,
+                        paid_amount=self.object.paidAmount,
+                    )
+                    self.object.invoice = invoice
+                    self.object.save()
+                # Redirect to invoice detail page
+                return redirect('purchase_invoice_detail', invoice_id=self.object.invoice.id)
 
-        # Calculate profit (if applicable)
-        form.instance.profit = (product.purchase_price * quantity) - totalPrice
+        return self.render_to_response(self.get_context_data(form=form, selles_item_formset=selles_item_formset))
 
-        # Update stock when a product is sold
-         # Get the stock for this product and decrement the quantity
-        stock, created = Stock.objects.get_or_create(product=product)
-        
-        if stock.quantity >= quantity:
-            stock.quantity -= quantity  # Decrease the stock by sold quantity
-            stock.save()  # Save the updated stock
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.object:
+            context['selles_item_formset'] = SellesItemFormSet(queryset=self.object.selles_items.all())
+
         else:
-            form.add_error('quantity', 'Not enough stock available for this sale.')  # Add form error if insufficient stock
-            return self.form_invalid(form)  # Return the invalid form if stock is insufficient
+            context['selles_item_formset'] = SellesItemFormSet(queryset=SellesItem.objects.none())  # Empty formset for new Selles
+        return context
 
-        # Create the associated PurchaseInvoice (if needed)
-        invoice = PurchaseInvoice.objects.create(
-            invoice_number=str(uuid.uuid4()),  # Generate a unique invoice number
-            total_amount=totalPrice,
-            discount=discountAmount,
-            paid_amount=paidAmount,
-            due_amount=dueAmount,  # Calculate due based on the sale
-        )
-
-        # Link the invoice to the sale
-        form.instance.invoice = invoice  # Set the invoice for this sale
-
-        # Save the sale object (now with the invoice linked)
-        return super().form_valid(form)
-
-    def form_invalid(self, form):
-        # Handle any form validation errors (optional)
-        return super().form_invalid(form)
+        
     
 
 
@@ -1018,7 +1011,7 @@ class DashboardView(TemplateView):
 
 class PurchaseListView(ListView):
     model = Purchase
-    template_name = 'PurchaseDetails.html'  # Replace with your actual template
+    template_name = 'purchase/purchaseList.html'  # Replace with your actual template
     context_object_name = 'purchases'
 
     def get_queryset(self):

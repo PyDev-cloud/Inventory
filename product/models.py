@@ -148,17 +148,13 @@ class PurchaseInvoice(models.Model):
 
 
 class Selles(models.Model):
-    product = models.ForeignKey(Product, related_name="ProductP", on_delete=models.CASCADE)
-    quantity = models.IntegerField()
-    customer = models.ForeignKey(Customer, related_name="customerC", on_delete=models.CASCADE)
-    totalPrice = models.DecimalField(max_digits=10, decimal_places=2)
-    discountAmount = models.DecimalField(max_digits=10, decimal_places=2)
-    paidAmount = models.DecimalField(max_digits=10, decimal_places=2)
-    DueAmount = models.IntegerField()
-    create_at = models.DateField(auto_now=True)
-    update_at = models.DateField(auto_now=True)
-    invoice = models.ForeignKey(PurchaseInvoice, related_name="sales", on_delete=models.CASCADE)  # Link to Invoice
-    profit = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    customer = models.ForeignKey(Customer, related_name="customer", on_delete=models.CASCADE)
+    totalPrice = models.DecimalField(max_digits=10, decimal_places=2,default=0)
+    discountAmount = models.DecimalField(max_digits=10, decimal_places=2,default=0)
+    paidAmount = models.DecimalField(max_digits=10, decimal_places=2,default=0)
+    dueAmount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    invoice = models.OneToOneField(PurchaseInvoice, null=True, blank=True, on_delete=models.SET_NULL)  # Link to Invoice
+    
     
     def save(self, *args, **kwargs):
         # Ensure the invoice is created automatically if not exists
@@ -171,25 +167,32 @@ class Selles(models.Model):
             )
             self.invoice = invoice
         
-        # Calculate totalPrice (product price * quantity)
-        if self.product:
-            self.totalPrice = Decimal(self.product.sale_price - self.discountAmount) * self.quantity
-
-        # Calculate DueAmount: totalPrice - paidAmount - discountAmount
-        self.DueAmount = self.totalPrice - self.paidAmount
-        
-        # For Profit Calculation 
-        product = self.product
-        purchase_price = product.purchase_price
-        self.profit = Decimal(purchase_price) * self.quantity - self.totalPrice
-        
         super(Selles, self).save(*args, **kwargs)
 
     def __str__(self):
-        return f'Sell of {self.product.name} to {self.customer.name}'
+        return f'Sell of  {self.customer.name}'
     
 
 
 
+class SellesItem(models.Model):
+    selles = models.ForeignKey(Selles, related_name='selles_items', on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, related_name="Product", on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    totalAmount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    profit = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    def __str__(self):
+        item_names = ', '.join([str(item.product.name) for item in self.sellesitem_set.all()])
+        return f'Sell of {item_names} to {self.customer.name}'
 
+# SellesItem save method
+    def save(self, *args, **kwargs):
+        self.totalAmount = self.quantity * self.unit_price
 
+        # Decrease stock on sale
+        stock, created = Stock.objects.get_or_create(product=self.product)
+        stock.quantity -= self.quantity  # Decrease the stock by the sold quantity
+        stock.save()
+
+        super().save(*args, **kwargs)

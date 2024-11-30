@@ -1,36 +1,70 @@
-{% extends "../navbar.html" %} {% load static %} {% block content %} 
-{% if messages %}
-<ul>
-  {% for message in messages %}
-  <li>{{ message }}</li>
-  {% endfor %}
-</ul>
-{% endif %}
-<div class="d-flex justify-content-center align-items-center vh-100">
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-md-5 mr-4">
-        <h2 class="text-center mb-4">Create Selles</h2>
-        <form method="post">
-          {% csrf_token %} {{ form.as_p }}
-          <!-- Render the form fields -->
-          <button type="submit" class="btn btn-primary btn-lg w-100">
-            Create
-          </button>
-        </form>
-      </div>
-      <div class="col-md-5 ml-5">
-        <h3 class="mb-4">Upload CSV or Excel File</h3>
-        <a href="#">Download Sample File</a>
-        <form method="post" enctype="multipart/form-data">
-          {% csrf_token %} {{ file_form.as_p }}
-          <!-- Excel file upload form fields -->
-          <button type="submit" class="btn btn-success btn-lg w-100">
-            Upload Excel
-          </button>
-        </form>
-      </div>
+{% extends "../navbar.html" %}
+{% load static %}
+
+{% block content %}
+
+<h2>Create a Sale</h2>
+
+<form method="POST" id="selles-form">
+    {% csrf_token %}
+
+    <!-- Main Selles form fields -->
+    {{ form.as_p }}
+
+    <h3>Sale Items</h3>
+    <!-- Render the management form -->
+    <div id="selles-item-forms">
+        {{ selles_item_formset.management_form }}  <!-- Ensure the management form is rendered correctly -->
+
+        <!-- Render the individual forms -->
+        {% for form in selles_item_formset %}
+            <div class="form-row">
+                {{ form.as_p }}
+            </div>
+        {% endfor %}
     </div>
-  </div>
-</div>
+
+    <!-- Button to add another product -->
+    <button type="button" id="add-item-button">Add another product</button>
+
+    <!-- Submit the sale form -->
+    <button type="submit">Save Sale</button>
+</form>
+
+<script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function() {
+        // Button to add new product form
+        document.getElementById("add-item-button").addEventListener("click", function() {
+            // Get the current form count
+            var formCount = document.querySelectorAll('.form-row').length;
+
+            // Get the management form
+            var managementForm = document.querySelector("#id_form-TOTAL_FORMS");
+            if (!managementForm) {
+                console.error("Management form not found!");
+                return;  // Exit if management form is missing
+            }
+
+            // Increment the form count
+            var newFormCount = parseInt(managementForm.value) + 1;
+            managementForm.value = newFormCount;  // Update the TOTAL_FORMS field
+
+            // Get the first form to clone (the last form in the current formset)
+            var newForm = document.querySelector('.form-row').cloneNode(true);
+
+            // Update the form's index
+            var formFields = newForm.querySelectorAll('input, select, textarea');
+            formFields.forEach(function(field) {
+                var name = field.name;
+                var newName = name.replace(/-0-/, `-${newFormCount}-`);
+                field.name = newName;
+                field.id = "id_" + newName;  // Update the field's id as well
+            });
+
+            // Append the cloned form to the container
+            document.getElementById("selles-item-forms").appendChild(newForm);
+        });
+    });
+</script>
+
 {% endblock %}
