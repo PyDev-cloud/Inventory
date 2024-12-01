@@ -62,26 +62,10 @@ class Customer(models.Model):
 class Stock(models.Model):
     product = models.ForeignKey(Product, related_name="stock", on_delete=models.CASCADE)
     quantity = models.IntegerField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now=True)
    
 
-    
-# class PurchaseInvoice(models.Model):
-    
-#     invoice_number = models.CharField(max_length=50, unique=True)
-#     invoice_date = models.DateField(auto_now_add=True)
-#     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
-#     paid_amount = models.DecimalField(max_digits=10, decimal_places=2)
-#     discount = models.FloatField()
-#     due_amount = models.FloatField()
-#     status = models.CharField(max_length=20, choices=[('Paid', 'Paid'), ('Due', 'Due')], default='Due')
-    
-#     def __str__(self):
-#         return self.invoice_number
 
-#     def save(self, *args, **kwargs):
-#         self.due_amount = self.total_amount - self.paid_amount
-#         super().save(*args, **kwargs)
 
 
 
@@ -97,7 +81,7 @@ class Purchase(models.Model):
         
         # Check if an invoice already exists for this purchase, if not, create one and link it to the purchase
         if not self.invoice:  # Ensure only one invoice is created, and it's linked to the Purchase instance
-            invoice = PurchaseInvoice.objects.create(
+            invoice, created = PurchaseInvoice.objects.get_or_create(
                 invoice_number=str(uuid.uuid4()),  # Generate a unique invoice number
                 total_amount=self.totalAmount,
                 discount=self.discount,
@@ -121,6 +105,7 @@ class PurchaseItem(models.Model):
     quantity = models.PositiveIntegerField()
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     totalAmount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    
 
     def save(self, *args, **kwargs):
         # Calculate totalAmount (quantity * unit_price)
@@ -134,15 +119,19 @@ class PurchaseItem(models.Model):
     def __str__(self):
         return f"{self.quantity} x {self.product.name}"
 
+
 class PurchaseInvoice(models.Model):
     invoice_number = models.CharField(max_length=100, unique=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     discount = models.DecimalField(max_digits=5, decimal_places=2)
     paid_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    created_at=models.DateTimeField(auto_now=True)
+    GrandTotal = models.DecimalField(max_digits=10, decimal_places=2, null=False, default=0)
+    dueAmount = models.DecimalField(max_digits=10, decimal_places=2, null=False, default=0)
 
     def __str__(self):
-        
         return f"Invoice #{self.invoice_number}"
+
     
     
 

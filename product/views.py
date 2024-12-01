@@ -501,7 +501,7 @@ class PurchaseCreateView(CreateView):
 
                 # Create the PurchaseInvoice if not already created
                 if not self.object.invoice:
-                    invoice = PurchaseInvoice.objects.create(
+                    invoice, created = PurchaseInvoice.objects.get_or_create(
                         invoice_number=str(uuid.uuid4()),
                         total_amount=self.object.totalAmount,
                         discount=self.object.discount,
@@ -529,7 +529,7 @@ class PurchaseCreateView(CreateView):
 # Create a view to show the Purchase Invoice
 class PurchaseInvoiceDetailView(CreateView):
     model = Purchase
-    template_name = 'Receipt/Invoice.html'  # The template where the invoice is shown
+    template_name = 'Receipt/PurchaseInvoice.html'  # The template where the invoice is shown
     form_class=PurchaseInvoiceForm
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -570,13 +570,34 @@ class SellesCreateView(CreateView):
     success_url = reverse_lazy('')
 
     def form_valid(self, form):
+        # Start a database transaction to ensure atomicity
         with transaction.atomic():
             self.object = form.save()
 
-            # Correct relationship with 'selles' field
-            selles_item_formset = SellesItemFormSet(self.request.POST, queryset=SellesItem.objects.filter(selles=self.object))
+            # Initialize a flag to track stock availability
+            insufficient_stock = False
 
+            # Check stock for each SellesItem form
+            selles_item_formset = SellesItemFormSet(self.request.POST, queryset=SellesItem.objects.filter(selles=self.object))
+            
             if selles_item_formset.is_valid():
+                for form in selles_item_formset:
+                    product = form.cleaned_data.get('product')
+                    quantity = form.cleaned_data.get('quantity')
+
+                    # Check if the stock for the product is enough
+                    stock, created = Stock.objects.get_or_create(product=product)
+                    if stock.quantity < quantity:
+                        insufficient_stock = True
+                        # Add an error for the specific product if stock is insufficient
+                        form.add_error('quantity', f"Insufficient stock for {product.name}. Only {stock.quantity} available.")
+                
+                # If stock is insufficient, we prevent the sale creation
+                if insufficient_stock:
+                    messages.error(self.request, "Some products have insufficient stock.")
+                    return self.render_to_response(self.get_context_data(form=form, selles_item_formset=selles_item_formset))
+
+                # If stock is sufficient, proceed to save SellesItem
                 for form in selles_item_formset:
                     form.instance.selles = self.object
                 selles_item_formset.save()
@@ -587,6 +608,8 @@ class SellesCreateView(CreateView):
                 self.object.totalAmount = total_amount
                 self.object.dueAmount = total_amount - paid_amount
                 self.object.save()
+
+                # Create an invoice if one doesn't exist
                 if not self.object.invoice:
                     invoice = PurchaseInvoice.objects.create(
                         invoice_number=str(uuid.uuid4()),
@@ -596,16 +619,17 @@ class SellesCreateView(CreateView):
                     )
                     self.object.invoice = invoice
                     self.object.save()
-                # Redirect to invoice detail page
+
+                # Redirect to the invoice detail page
                 return redirect('purchase_invoice_detail', invoice_id=self.object.invoice.id)
 
+        # If the form is invalid or any other issue, render the form again with errors
         return self.render_to_response(self.get_context_data(form=form, selles_item_formset=selles_item_formset))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if self.object:
             context['selles_item_formset'] = SellesItemFormSet(queryset=self.object.selles_items.all())
-
         else:
             context['selles_item_formset'] = SellesItemFormSet(queryset=SellesItem.objects.none())  # Empty formset for new Selles
         return context

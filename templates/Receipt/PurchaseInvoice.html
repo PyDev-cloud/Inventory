@@ -1,0 +1,64 @@
+{% extends '../navbar.html' %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 text-center">
+      <h2>Purchase Invoice</h2>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <p><strong>Invoice No:</strong> {{ invoice.invoice_number }}</p>
+      <p><strong>Invoice Date:</strong> {{ invoice.created_at|date:"F d, Y" }}</p>
+    </div>
+    <div class="col-md-6">
+      <p><strong>Supplier:</strong> {{ invoice.purchase.supplier.name }}</p>
+      <p><strong>Address:</strong> {{ invoice.purchase.supplier.Address }}</p>
+      {% if invoice.purchase.supplier.mobile %}
+      <p><strong>Phone:</strong> {{ invoice.purchase.supplier.mobile }}</p>
+      {% endif %}
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Product Name</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for purchase_item in invoice.purchase.purchase_items.all %}
+          <tr>
+            <td>{{ purchase_item.product.name }}</td>
+            <td>{{ purchase_item.unit_price }}</td>
+            <td>{{ purchase_item.quantity }}</td>
+            <td>{{ purchase_item.totalAmount }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3">Total</td>
+            <td>{{ invoice.purchase.totalAmount }}</td>
+          </tr>
+          {% if invoice.discount > 0 %}
+          <tr>
+            <td colspan="3">Discount</td>
+            <td>{{ invoice.discount }}</td>
+          </tr>
+          <tr>
+            <td colspan="3"><strong>Grand Total</strong></td>
+            <td>{{ invoice.GrandTotal }}</td>
+          </tr>
+          {% endif %}
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

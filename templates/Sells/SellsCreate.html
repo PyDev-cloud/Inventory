@@ -3,34 +3,54 @@
 
 {% block content %}
 
-<h2>Create a Sale</h2>
 
+<div class="container">
+    <h2>Create a Sale</h2>
 <form method="POST" id="selles-form">
     {% csrf_token %}
 
-    <!-- Main Selles form fields -->
-    {{ form.as_p }}
+    <!-- Main Sale form fields -->
+    <div class="mb-4">
+        {{ form.as_p }}
+    </div>
 
     <h3>Sale Items</h3>
+
     <!-- Render the management form -->
     <div id="selles-item-forms">
-        {{ selles_item_formset.management_form }}  <!-- Ensure the management form is rendered correctly -->
+        <div class="row">
+            <div class="col-md-12">
+                <table class="table table-bordered table-striped w-auto">
+                    <thead>
+                        
+                    </thead>
+                    <tbody>
+                        {{ selles_item_formset.management_form }} <!-- Ensure the management form is rendered correctly -->
 
-        <!-- Render the individual forms -->
-        {% for form in selles_item_formset %}
-            <div class="form-row">
-                {{ form.as_p }}
+                        <!-- Render the individual forms -->
+                        {% for form in selles_item_formset %}
+                            <tr class="form-row">
+                                <td>{{ form.product }}</td>
+                                <td>{{ form.unit_price }}</td>
+                                <td>{{ form.quantity }}</td>
+                                <td>{{ form.totalAmount }}</td>
+                                
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    
+                </table>
             </div>
-        {% endfor %}
+        </div>
     </div>
 
     <!-- Button to add another product -->
-    <button type="button" id="add-item-button">Add another product</button>
+    <button type="button" id="add-item-button" class="btn btn-primary mt-3">Add another product</button>
 
     <!-- Submit the sale form -->
-    <button type="submit">Save Sale</button>
+    <button type="submit" class="btn btn-success mt-3">Save Sale</button>
 </form>
-
+</div>
 <script type="text/javascript">
     document.addEventListener("DOMContentLoaded", function() {
         // Button to add new product form
@@ -49,20 +69,28 @@
             var newFormCount = parseInt(managementForm.value) + 1;
             managementForm.value = newFormCount;  // Update the TOTAL_FORMS field
 
-            // Get the first form to clone (the last form in the current formset)
-            var newForm = document.querySelector('.form-row').cloneNode(true);
+            // Get the last form in the DOM to clone
+            var lastForm = document.querySelector('.form-row');
+            if (!lastForm) {
+                console.error("No form row found to clone.");
+                return;  // Exit if no form to clone
+            }
+
+            // Clone the last form row (excluding the <tr> wrapping it)
+            var newForm = lastForm.cloneNode(true);
 
             // Update the form's index
             var formFields = newForm.querySelectorAll('input, select, textarea');
             formFields.forEach(function(field) {
                 var name = field.name;
-                var newName = name.replace(/-0-/, `-${newFormCount}-`);
+                var newName = name.replace(/-0-/, `-${newFormCount}-`);  // Replace the form index
                 field.name = newName;
-                field.id = "id_" + newName;  // Update the field's id as well
+                field.id = "id_" + newName;  // Update the field's ID as well
             });
 
-            // Append the cloned form to the container
-            document.getElementById("selles-item-forms").appendChild(newForm);
+            // Append the cloned form to the table
+            var tbody = document.querySelector("table tbody");
+            tbody.appendChild(newForm);
         });
     });
 </script>

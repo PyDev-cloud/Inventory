@@ -134,13 +134,26 @@ class CustomarForm(forms.ModelForm):
 class SeelsForm(forms.ModelForm):
     class Meta:
         model = Selles
-        fields = ['customer', 'discountAmount', 'paidAmount']  
-
+        fields = ['customer', 'discountAmount', 'paidAmount']
+        widgets = {
+            'customer': forms.Select(attrs={'class': 'form-control'}),  # Example widget for product (a dropdown)
+            'discountAmount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter Unit Price'}),  # For unit price field
+            'paidAmount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter Unit Price'}),  # For unit price field
+            
+        }
 
 SellesItemFormSet = modelformset_factory(
     SellesItem,  
-    fields=['product', 'quantity', 'unit_price'],  
+    fields=['product', 'quantity', 'unit_price','totalAmount',],  
     extra=1, 
+    widgets = {
+            'product': forms.Select(attrs={'class': 'form-control'}),  # Example widget for product (a dropdown)
+            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter Quantity','style': 'width: 206px;'}),  # For quantity field
+            'unit_price': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter Unit Price'}),  # For unit price field
+            'totalAmount': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),  # Readonly for totalAmount
+            
+
+        }
 )
 
 
