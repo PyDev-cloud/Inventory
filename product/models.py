@@ -4,6 +4,8 @@ from django.db import models
 
 import uuid
 
+from django.forms import ValidationError
+
 # Create your models here.
 
 
@@ -77,47 +79,28 @@ class Purchase(models.Model):
     dueAmount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     invoice = models.OneToOneField('PurchaseInvoice', null=True, blank=True, on_delete=models.SET_NULL)
 
-    def save(self, *args, **kwargs):
-        
-        # Check if an invoice already exists for this purchase, if not, create one and link it to the purchase
-        if not self.invoice:  # Ensure only one invoice is created, and it's linked to the Purchase instance
-            invoice, created = PurchaseInvoice.objects.get_or_create(
-                invoice_number=str(uuid.uuid4()),  # Generate a unique invoice number
-                total_amount=self.totalAmount,
-                discount=self.discount,
-                paid_amount=self.paidAmount,
-            )
-            self.invoice = invoice  # Assign the created invoice to the Purchase instance
-
-        super(Purchase, self).save(*args, **kwargs)  # Save purchase
-
     def __str__(self):
-        return f'Purchase of {self.supplier.name}'
-    def __str__(self):
-        return f'Purchase of {self.supplier.name}'
+        return f"Purchase {self.id}"
 
 
-
-    
 class PurchaseItem(models.Model):
-    purchase = models.ForeignKey(Purchase, related_name='purchase_items', on_delete=models.CASCADE)
+    purchase = models.ForeignKey(Purchase, related_name='purchase_items', on_delete=models.CASCADE)  # Custom reverse relation
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     totalAmount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    
+    def clean(self):
+        # Ensure product is set before saving
+        if not self.product:
+            raise ValidationError("Product is required for each purchase item.")
+        super().clean()
 
     def save(self, *args, **kwargs):
-        # Calculate totalAmount (quantity * unit_price)
-        self.totalAmount = self.quantity * self.unit_price
-
-        stock, created = Stock.objects.get_or_create(product=self.product)  # Get or create the Stock entry
-        stock.quantity += self.quantity  # Increase the stock by the purchased quantity
-        stock.save()  # Save the updated stock
+        if not self.totalAmount:
+            self.totalAmount = self.quantity * self.unit_price
         super().save(*args, **kwargs)
 
-    def __str__(self):
-        return f"{self.quantity} x {self.product.name}"
+    
 
 
 class PurchaseInvoice(models.Model):
@@ -138,10 +121,10 @@ class PurchaseInvoice(models.Model):
 
 class Selles(models.Model):
     customer = models.ForeignKey(Customer, related_name="customer", on_delete=models.CASCADE)
-    totalPrice = models.DecimalField(max_digits=10, decimal_places=2,default=0)
+    totalPrice = models.DecimalField(max_digits=10, decimal_places=2,default=0,blank=True,null=True)
     discountAmount = models.DecimalField(max_digits=10, decimal_places=2,default=0)
     paidAmount = models.DecimalField(max_digits=10, decimal_places=2,default=0)
-    dueAmount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    dueAmount = models.DecimalField(max_digits=10, decimal_places=2, default=0,blank=True,null=True)
     invoice = models.OneToOneField(PurchaseInvoice, null=True, blank=True, on_delete=models.SET_NULL)  # Link to Invoice
     
     
@@ -172,7 +155,7 @@ class SellesItem(models.Model):
     totalAmount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     profit = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     def __str__(self):
-        item_names = ', '.join([str(item.product.name) for item in self.sellesitem_set.all()])
+        item_names = ', '.join([str(item.product.name) for item in self.selles_items_set.all()])
         return f'Sell of {item_names} to {self.customer.name}'
 
 # SellesItem save method

@@ -79,68 +79,35 @@ class CustomarForm(forms.ModelForm):
 
         }
 
-# class PurchaseForm(forms.ModelForm):
-#     class Meta:
-#         model = Purchase
-#         fields = ['productname', 'suppliername', 'quantity', 'discount', 'paidAmount']
-#         widgets = {
-#             'productname': forms.Select(attrs={'class': 'form-control form-control-lg', 'style': 'font-size: 16px;'}),
-#             'suppliername': forms.Select(attrs={'class': 'form-control form-control-lg', 'style': 'font-size: 16px;'}),
-#             'quantity': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name','style': 'font-size: 16px;'}),
-#             'discount': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name','style': 'font-size: 16px;'}),
-#             'paidAmount': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name','style': 'font-size: 16px;'}),
 
-#         }
-
-#     def clean(self):
-#         cleaned_data = super().clean()
-#         quantity = cleaned_data.get('quantity')
-#         product = cleaned_data.get('productname')
-#         discount = cleaned_data.get('discount')
-#         paid_amount = cleaned_data.get('paidAmount')
-
-#         # Calculate totalAmount based on product price and quantity
-#         if product and quantity:
-#             total_amount = product.purchase_price * quantity
-#             cleaned_data['totalAmount'] = total_amount
-
-#         if discount is None:
-#             cleaned_data['discount'] = 0  # Default discount if not provided
-        
-#         if paid_amount is None:
-#             cleaned_data['paidAmount'] = 0  # Default paid amount if not provided
-
-#         # Calculate dueAmount
-#         total_amount = cleaned_data.get('totalAmount')
-#         due_amount = total_amount - paid_amount - discount
-#         cleaned_data['dueAmount'] = due_amount
-
-#         return cleaned_data
     
 
-# class SellesForm(forms.ModelForm):
-#     class Meta:
-#         model = Selles
-#         fields = [ 'customer', 'discountAmount', 'paidAmount','dueAmount']
-#         widgets = {
-#             'customer': forms.Select(attrs={'class': 'form-control form-control-lg', 'style': 'font-size: 16px;'}),
-#             'discountAmount': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name','style': 'font-size: 16px;'}),
-#             'paidAmount': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name','style': 'font-size: 16px;'}),
-#             'dueAmount':forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name','style': 'font-size: 16px;'}),
-#         }
-#     def __init__(self, *args, **kwargs):
-#         super(SellesForm, self).__init__(*args, **kwargs)
+
 
 class SeelsForm(forms.ModelForm):
     class Meta:
         model = Selles
-        fields = ['customer', 'discountAmount', 'paidAmount']
+        fields = ['customer', 'discountAmount', 'paidAmount','totalPrice','dueAmount']
         widgets = {
             'customer': forms.Select(attrs={'class': 'form-control'}),  # Example widget for product (a dropdown)
             'discountAmount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter Unit Price'}),  # For unit price field
             'paidAmount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter Unit Price'}),  # For unit price field
-            
+            'totalPrice': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'dueAmount' :forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
         }
+        totalPrice = forms.DecimalField(required=False, widget=forms.HiddenInput())
+        dueAmount = forms.DecimalField(required=False, widget=forms.HiddenInput())
+        def clean(self):
+            cleaned_data = super().clean()
+            total_price = cleaned_data.get('totalPrice')
+            due_amount = cleaned_data.get('dueAmount')
+
+            # Ensure these values are correctly calculated on the server side, if needed
+            if total_price and due_amount:
+                # Validate or adjust values if necessary
+                pass
+            
+            return cleaned_data
 
 SellesItemFormSet = modelformset_factory(
     SellesItem,  
@@ -156,7 +123,6 @@ SellesItemFormSet = modelformset_factory(
         }
 )
 
-
 class FileUploadForm(forms.Form):
     file = forms.FileField()
 
@@ -170,15 +136,11 @@ class PurchaseInvoiceForm(forms.ModelForm):
 
 
 
-# PurchaseForm মডেল ফর্ম
+# PurchaseForm 
 class PurchaseForm(forms.ModelForm):
     class Meta:
         model = Purchase
-        fields = ['supplier', 'discount', 'paidAmount']  
+        fields = ['supplier', 'discount', 'paidAmount']
 
-# PurchaseItemFormSet 
-PurchaseItemFormSet = modelformset_factory(
-    PurchaseItem, 
-    fields=['product', 'quantity', 'unit_price'], 
-    extra=1,  
-)
+# Define PurchaseItemFormSet to handle multiple PurchaseItems in the same form
+PurchaseItemFormSet = modelformset_factory(PurchaseItem, fields=['product', 'quantity', 'unit_price'],extra=6)

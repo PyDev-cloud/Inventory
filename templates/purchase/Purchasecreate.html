@@ -5,15 +5,11 @@
 
 <form method="POST" id="purchase-form">
     {% csrf_token %}
-
     {{ form.as_p }}
 
     <h3>Purchase Items</h3>
-    <!-- Render the management form correctly -->
     <div id="purchase-item-forms">
-        {{ purchase_item_formset.management_form }}  <!-- This must be rendered correctly before the forms -->
-
-        <!-- Render the individual forms -->
+        {{ purchase_item_formset.management_form }}
         {% for form in purchase_item_formset %}
             <div class="form-row">
                 {{ form.as_p }}
@@ -21,46 +17,32 @@
         {% endfor %}
     </div>
 
-    <!-- Button to add another product -->
     <button type="button" id="add-item-button">Add another product</button>
-
-    <!-- Submit the purchase form -->
     <button type="submit">Save Purchase</button>
 </form>
 
 <script type="text/javascript">
     document.addEventListener("DOMContentLoaded", function() {
-        // Button to add new product form
         document.getElementById("add-item-button").addEventListener("click", function() {
-            // Get the current form count
             var formCount = document.querySelectorAll('.form-row').length;
-            
-
-            // Get the management form
             var managementForm = document.querySelector("#id_form-TOTAL_FORMS");
-            console.log(managementForm)
             if (!managementForm) {
                 console.error("Management form not found!");
-                return;  // Exit if management form is missing
+                return;
             }
 
-            // Increment the form count
             var newFormCount = parseInt(managementForm.value) + 1;
-            managementForm.value = newFormCount;  // Update the TOTAL_FORMS field
+            managementForm.value = newFormCount;
 
-            // Get the first form to clone (the last form in the current formset)
             var newForm = document.querySelector('.form-row').cloneNode(true);
-
-            // Update the form's index
             var formFields = newForm.querySelectorAll('input, select, textarea');
             formFields.forEach(function(field) {
                 var name = field.name;
                 var newName = name.replace(/-0-/, `-${newFormCount}-`);
                 field.name = newName;
-                field.id = "id_" + newName;  // Update the field's id as well
+                field.id = "id_" + newName;
             });
 
-            // Append the cloned form to the container
             document.getElementById("purchase-item-forms").appendChild(newForm);
         });
     });

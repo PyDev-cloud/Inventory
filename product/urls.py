@@ -28,18 +28,31 @@ urlpatterns = [
     path('customerUpdate/<int:pk>/edit/',CustomerUpdateView.as_view(),name="customerupdate"),
     
 
-    path('purchase/create/', PurchaseCreateView.as_view(), name='purchase_create'),
+   
     path('purchase/invoice/<int:invoice_id>/', PurchaseInvoiceDetailView.as_view(), name='purchase_invoice_detail'),
     #path('purchase/create/', PurchaseCreate.as_view(), name='purchase_create'),
     path('purchase/receipt/<int:purchase_id>/', InvoiceView.as_view(), name="purchase_receipt"),  # Show a specific receipt
     path("purchaseList/",PurchaseListView.as_view(),name="purchaseList"),
     #path('purchase/create/<int:product_id>/', PurchaseCreate.as_view(), name='Reorder'),
 
+    path('create_purchase/', PurchaseCreateView.as_view(), name='create_purchase'),
+
+
+    path('purchase-items/', PurchaseItemListView.as_view(), name='purchase_item_list'),  # List all PurchaseItems
+    path('purchase-items/<int:purchase_id>/', PurchaseItemListView.as_view(), name='purchase_item_list_by_purchase'),  # Filter by purchase_id
+
+
+
+
+
+
+
+
 
 
 
     path('selles/', SellesListView.as_view(), name='selles_list'),
-    path('selles/create/', SellesCreateView.as_view(), name='selles_create'),
+
 
 
     path('StockList/', StockView.as_view(), name='stocklist'),

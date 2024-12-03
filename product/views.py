@@ -485,24 +485,34 @@ class PurchaseCreateView(CreateView):
 
             # Create or get the PurchaseItem formset based on the current Purchase instance
             purchase_item_formset = PurchaseItemFormSet(self.request.POST, queryset=PurchaseItem.objects.filter(purchase=self.object))
-            
+
             if purchase_item_formset.is_valid():
-                # Set the purchase for each form in the formset
-                for form in purchase_item_formset:
-                    form.instance.purchase = self.object
+                for idx, purchase_item_form in enumerate(purchase_item_formset):
+                    # Skip empty forms
+                    if not purchase_item_form.cleaned_data.get('product'):
+                        print(f"Form {idx} is missing product.")  # Debugging line
+                        continue  # Skip saving this item if no product is selected
 
-                # Save the formset
-                purchase_item_formset.save()
+                    # Save the valid form data
+                    purchase_item = purchase_item_form.save(commit=False)
 
-                # Calculate total and due amounts
-                self.object.totalAmount = sum([item.totalAmount for item in self.object.purchase_items.all()])
+                    if not purchase_item.quantity:
+                        purchase_item.quantity = 1  # Default quantity
+                    if not purchase_item.unit_price:
+                        purchase_item.unit_price = 100  # Default unit price
+
+                    purchase_item.purchase = self.object  # Link each item to the purchase
+                    purchase_item.save()
+
+                # After saving the items, recalculate the totalAmount and dueAmount for the purchase
+                self.object.totalAmount = sum(item.totalAmount for item in self.object.purchase_items.all())
                 self.object.dueAmount = self.object.totalAmount - self.object.paidAmount
-                self.object.save()
+                self.object.save()  # Save the updated Purchase instance
 
-                # Create the PurchaseInvoice if not already created
+                # Ensure the invoice is created if it does not exist
                 if not self.object.invoice:
-                    invoice, created = PurchaseInvoice.objects.get_or_create(
-                        invoice_number=str(uuid.uuid4()),
+                    invoice = PurchaseInvoice.objects.create(
+                        invoice_number=str(uuid.uuid4()),  # Unique invoice number
                         total_amount=self.object.totalAmount,
                         discount=self.object.discount,
                         paid_amount=self.object.paidAmount,
@@ -510,20 +520,21 @@ class PurchaseCreateView(CreateView):
                     self.object.invoice = invoice
                     self.object.save()
 
-                # Redirect to the invoice detail page
+                # Now the invoice is set, redirect to the purchase invoice detail page
                 return redirect('purchase_invoice_detail', invoice_id=self.object.invoice.id)
 
+            # If formset is invalid, re-render the page with errors
+            return self.render_to_response(self.get_context_data(form=form, purchase_item_formset=purchase_item_formset))
+
+        # If the form is not valid, re-render the page with errors
         return self.render_to_response(self.get_context_data(form=form, purchase_item_formset=purchase_item_formset))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
-        # Initialize the PurchaseItem formset
         if self.object:
             context['purchase_item_formset'] = PurchaseItemFormSet(queryset=self.object.purchase_items.all())
         else:
             context['purchase_item_formset'] = PurchaseItemFormSet(queryset=PurchaseItem.objects.none())  # Empty formset for new purchases
-
         return context
 
 # Create a view to show the Purchase Invoice
@@ -605,9 +616,12 @@ class SellesCreateView(CreateView):
                 # Calculate total and due amounts
                 total_amount = sum([item.totalAmount for item in self.object.selles_items.all()])
                 paid_amount = self.object.paidAmount if self.object.paidAmount else Decimal('0.00')
-                self.object.totalAmount = total_amount
-                self.object.dueAmount = total_amount - paid_amount
+                self.object.totalPrice = total_amount  # Save totalPrice
+                self.object.dueAmount = total_amount - paid_amount  # Calculate dueAmount
                 self.object.save()
+
+                  # Calculate total and due amounts based on SellesItem data
+        
 
                 # Create an invoice if one doesn't exist
                 if not self.object.invoice:
@@ -1113,3 +1127,32 @@ class PurchaseListView(ListView):
             df.to_excel(writer, index=False, sheet_name='Purchases')
 
         return response
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class PurchaseItemListView(ListView):
+    model = PurchaseItem
+    template_name = 'purchaseitems.html'  # Template for rendering the list
+    context_object_name = 'purchase_items'     # The context name for the list of items
+    
+    # Optionally you can filter by a specific purchase
+    def get_queryset(self):
+        purchase_id = self.kwargs.get('purchase_id')  # Assumes the purchase_id is passed in URL
+        if purchase_id:
+            return PurchaseItem.objects.filter(purchase_id=purchase_id)
+        return PurchaseItem.objects.all()
