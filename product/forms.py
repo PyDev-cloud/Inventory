@@ -84,44 +84,63 @@ class CustomarForm(forms.ModelForm):
 
 
 
-class SeelsForm(forms.ModelForm):
+class SellesForm(forms.ModelForm):
     class Meta:
         model = Selles
         fields = ['customer', 'discountAmount', 'paidAmount','totalPrice','dueAmount']
         widgets = {
             'customer': forms.Select(attrs={'class': 'form-control'}),  # Example widget for product (a dropdown)
-            'discountAmount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter Unit Price'}),  # For unit price field
-            'paidAmount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter Unit Price'}),  # For unit price field
-            'totalPrice': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
-            'dueAmount' :forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
         }
-        totalPrice = forms.DecimalField(required=False, widget=forms.HiddenInput())
-        dueAmount = forms.DecimalField(required=False, widget=forms.HiddenInput())
-        def clean(self):
-            cleaned_data = super().clean()
-            total_price = cleaned_data.get('totalPrice')
-            due_amount = cleaned_data.get('dueAmount')
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Add an empty label (placeholder-like option) to the 'supplier' field
+        self.fields['customer'].empty_label = "Select a customer"  # This simulates a placeholder
+        self.fields['customer'].widget.attrs.update({
+            'class': 'form-control'
+        })
+        
 
-            # Ensure these values are correctly calculated on the server side, if needed
-            if total_price and due_amount:
-                # Validate or adjust values if necessary
-                pass
-            
-            return cleaned_data
 
-SellesItemFormSet = modelformset_factory(
-    SellesItem,  
-    fields=['product', 'quantity', 'unit_price','totalAmount',],  
-    extra=1, 
-    widgets = {
-            'product': forms.Select(attrs={'class': 'form-control'}),  # Example widget for product (a dropdown)
-            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter Quantity','style': 'width: 206px;'}),  # For quantity field
-            'unit_price': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter Unit Price'}),  # For unit price field
-            'totalAmount': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),  # Readonly for totalAmount
-            
+class sellesItemForm(forms.ModelForm):
+    class Meta:
+        model = SellesItem
+        fields = ['product', 'quantity', 'unit_price']
 
-        }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Add an empty label (placeholder-like option) to the 'product' field
+        self.fields['product'].empty_label = "Select a product"  # This simulates a placeholder
+        self.fields['product'].widget.attrs.update({
+            'class': 'form-control'
+        })
+        # You can also set custom placeholder for other fields if needed
+        self.fields['quantity'].widget.attrs.update({
+            'placeholder': 'Enter Quantity',
+            'style': 'width: 206px;',
+            'class': 'form-control'
+        })
+        self.fields['unit_price'].widget.attrs.update({
+            'placeholder': 'Enter Unit Price',
+            'class': 'form-control'
+        })
+
+# Define the widgets for the PurchaseItemFormSet
+selles_item_widgets = {
+    'product': forms.Select(attrs={'class': 'form-control'}),
+    'quantity': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter Quantity', 'style': 'width: 206px;'}),
+    'unit_price': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter Unit Price'}),
+    'totalAmount': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+}
+# Define the PurchaseItemFormSet to handle multiple PurchaseItems
+sellesItemForm = modelformset_factory(
+    PurchaseItem, 
+    form=sellesItemForm,  # Use the custom form here
+    fields=['product', 'quantity', 'unit_price'], 
+    extra=10,
+    widgets=selles_item_widgets  # Pass the widgets here
 )
+
+
 
 class FileUploadForm(forms.Form):
     file = forms.FileField()
@@ -141,6 +160,54 @@ class PurchaseForm(forms.ModelForm):
     class Meta:
         model = Purchase
         fields = ['supplier', 'discount', 'paidAmount']
+        widgets = {
+            'supplier': forms.Select(attrs={'class': 'form-control'}),
+          
+        }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Add an empty label (placeholder-like option) to the 'supplier' field
+        self.fields['supplier'].empty_label = "Select a supplier"  # This simulates a placeholder
+        self.fields['supplier'].widget.attrs.update({
+            'class': 'form-control'
+        })
 
-# Define PurchaseItemFormSet to handle multiple PurchaseItems in the same form
-PurchaseItemFormSet = modelformset_factory(PurchaseItem, fields=['product', 'quantity', 'unit_price'],extra=6)
+class PurchaseItemForm(forms.ModelForm):
+    class Meta:
+        model = PurchaseItem
+        fields = ['product', 'quantity', 'unit_price']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Add an empty label (placeholder-like option) to the 'product' field
+        self.fields['product'].empty_label = "Select a product"  # This simulates a placeholder
+        self.fields['product'].widget.attrs.update({
+            'class': 'form-control'
+        })
+        # You can also set custom placeholder for other fields if needed
+        self.fields['quantity'].widget.attrs.update({
+            'placeholder': 'Enter Quantity',
+            'style': 'width: 206px;',
+            'class': 'form-control'
+        })
+        self.fields['unit_price'].widget.attrs.update({
+            'placeholder': 'Enter Unit Price',
+            'class': 'form-control'
+        })
+
+# Define the widgets for the PurchaseItemFormSet
+purchase_item_widgets = {
+    'product': forms.Select(attrs={'class': 'form-control'}),
+    'quantity': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter Quantity', 'style': 'width: 206px;'}),
+    'unit_price': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter Unit Price'}),
+    'totalAmount': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+}
+
+# Define the PurchaseItemFormSet to handle multiple PurchaseItems
+PurchaseItemFormSet = modelformset_factory(
+    PurchaseItem, 
+    form=PurchaseItemForm,  # Use the custom form here
+    fields=['product', 'quantity', 'unit_price'], 
+    extra=10,
+    widgets=purchase_item_widgets  # Pass the widgets here
+)

@@ -36,6 +36,7 @@ urlpatterns = [
     #path('purchase/create/<int:product_id>/', PurchaseCreate.as_view(), name='Reorder'),
 
     path('create_purchase/', PurchaseCreateView.as_view(), name='create_purchase'),
+    path('create_selles/', SellesCreateView.as_view(), name='create_selles'),
 
 
     path('purchase-items/', PurchaseItemListView.as_view(), name='purchase_item_list'),  # List all PurchaseItems

@@ -495,25 +495,20 @@ class PurchaseCreateView(CreateView):
 
                     # Save the valid form data
                     purchase_item = purchase_item_form.save(commit=False)
-
-                    if not purchase_item.quantity:
-                        purchase_item.quantity = 1  # Default quantity
-                    if not purchase_item.unit_price:
-                        purchase_item.unit_price = 100  # Default unit price
-
                     purchase_item.purchase = self.object  # Link each item to the purchase
                     purchase_item.save()
 
                 # After saving the items, recalculate the totalAmount and dueAmount for the purchase
-                self.object.totalAmount = sum(item.totalAmount for item in self.object.purchase_items.all())
-                self.object.dueAmount = self.object.totalAmount - self.object.paidAmount
+                self.object.product_totalAmount = sum(item.product_totalAmount for item in self.object.purchase_items.all())
+                self.object.dueAmount = (self.object.product_totalAmount - self.object.discount)- self.object.paidAmount
+                self.object.alltotalAmount=sum(item.product_totalAmount for item in self.object.purchase_items.all())
                 self.object.save()  # Save the updated Purchase instance
 
                 # Ensure the invoice is created if it does not exist
                 if not self.object.invoice:
                     invoice = PurchaseInvoice.objects.create(
                         invoice_number=str(uuid.uuid4()),  # Unique invoice number
-                        total_amount=self.object.totalAmount,
+                        total_amount=self.object.alltotalAmount,
                         discount=self.object.discount,
                         paid_amount=self.object.paidAmount,
                     )
@@ -576,7 +571,7 @@ class SellesListView(ListView):
 
 class SellesCreateView(CreateView):
     model = Selles
-    form_class = SeelsForm
+    form_class = SellesForm
     template_name = 'Sells/SellsCreate.html'
     success_url = reverse_lazy('')
 
@@ -589,7 +584,7 @@ class SellesCreateView(CreateView):
             insufficient_stock = False
 
             # Check stock for each SellesItem form
-            selles_item_formset = SellesItemFormSet(self.request.POST, queryset=SellesItem.objects.filter(selles=self.object))
+            selles_item_formset = sellesItemForm(self.request.POST, queryset=SellesItem.objects.filter(selles=self.object))
             
             if selles_item_formset.is_valid():
                 for form in selles_item_formset:
@@ -643,9 +638,9 @@ class SellesCreateView(CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if self.object:
-            context['selles_item_formset'] = SellesItemFormSet(queryset=self.object.selles_items.all())
+            context['selles_item_formset'] = sellesItemForm(queryset=self.object.selles_items.all())
         else:
-            context['selles_item_formset'] = SellesItemFormSet(queryset=SellesItem.objects.none())  # Empty formset for new Selles
+            context['selles_item_formset'] = sellesItemForm(queryset=SellesItem.objects.none())  # Empty formset for new Selles
         return context
 
         

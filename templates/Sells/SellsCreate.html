@@ -8,29 +8,30 @@
         <ul>
             {% for field in form %}
                 {% for error in field.errors %}
-                    <li>{{field.name}}{{ error }}</li>
+                    <li>{{field.name}}: {{ error }}</li>
                 {% endfor %}
             {% endfor %}
         </ul>
     </div>
-{% endif %}
-    <h2>Create a Sale</h2>
-    <form method="POST" id="selles-form">
+    {% endif %}
+
+    <h2>Create a Purchase</h2>
+    <form method="POST" id="purchase-form">
         {% csrf_token %}
 
-        <!-- Main Sale form fields -->
+        <!-- Supplier Information -->
         <div class="mb-4">
             {{ form.customer }}
         </div>
 
-        <h3>Sale Items</h3>
-
         <!-- Render the management form -->
-        <div id="selles-item-forms">
+        <h3>Selles Items</h3>
+        <!-- Render Purchase Item formset -->
+        <div id="purchase-item-forms">
             <div class="row">
                 <div class="col-md-12">
                     <table class="table table-bordered table-striped">
-                        <thead>
+                        <thead id="product-rows">
                             {{ selles_item_formset.management_form }} <!-- Ensure the management form is rendered correctly -->
                             {% for form in selles_item_formset %}
                             <!-- Render the individual forms -->
@@ -43,7 +44,7 @@
                                     {{ form.quantity }}
                                 </td>
                                 <td>
-                                    <input type="text" name="{{ form.totalAmount.name }}" id="id_{{ form.totalAmount.name }}" class="form-control" readonly />
+                                    <input type="text" name="product_totalAmount" class="form-control" readonly />
                                 </td>
                             </tr>
                             {% endfor %}
@@ -52,28 +53,28 @@
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="3" class="text-right"><strong>Total Price:</strong></td>
-                                <td class="text-right" id="totalPrice">{{ totalPrice }}</td>
+                                <td colspan="3" class="text-right"><strong>Total Amount:</strong></td>
+                                <td class="text-right" id="alltotalAmount">0.00</td>
                             </tr>
                             <tr>
                                 <td colspan="3" class="text-right"><strong>Discount Amount:</strong></td>
-                                <td class="text-right">
-                                    <input type="number" id="discountAmount" name="discountAmount" class="form-control" value="{{ form.discountAmount.value|default:0 }}">
-                                </td>
+                <td class="text-right">
+                    <input type="number" id="discountAmount" name="discountAmount" class="form-control" value="0">
+                </td>
                             </tr>
                             <tr>
                                 <td colspan="3" class="text-right"><strong>Grand Total:</strong></td>
-                                <td class="text-right" id="grandTotal">{{ grandTotal }}</td>
+                <td class="text-right" id="grandTotal">0.00</td>
                             </tr>
                             <tr>
-                                <td colspan="3" class="text-right"><strong>Paid Amount: </strong></td>
-                                <td class="text-right">
-                                    <input type="number" id="paidAmount" name="paidAmount" class="form-control" value="{{ form.paidAmount.value|default:0 }}">
-                                </td>
+                                <td colspan="3" class="text-right"><strong>Paid Amount:</strong></td>
+                <td class="text-right">
+                    <input type="number" id="paidAmount" name="paidAmount" class="form-control" value="0">
+                </td>
                             </tr>
                             <tr>
                                 <td colspan="3" class="text-right"><strong>Due Amount:</strong></td>
-                                <td class="text-right" id="dueAmount">{{ dueAmount }}</td>
+                <td class="text-right" id="dueAmount">0.00</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -82,189 +83,122 @@
         </div>
 
         <!-- Button to add another product -->
-        <button type="button" id="add-item-button" class="btn btn-primary mt-3">Add another product</button>
+        <button type="button" id="add-item-button" class="btn btn-primary mt-3">Add product</button>
 
         <!-- Submit the sale form -->
-        <button type="submit" class="btn btn-success mt-3">Save Sale</button>
+        <button type="submit" class="btn btn-success mt-3">Create</button>
     </form>
 </div>
 
 <script type="text/javascript">
     document.addEventListener("DOMContentLoaded", function() {
-        // Calculate totalAmount for a single row
+
+        // Function to calculate the total amount for each product row
         function calculateTotalAmount(row) {
             const unitPrice = row.querySelector('[name$="unit_price"]');
             const quantity = row.querySelector('[name$="quantity"]');
-            const totalAmountField = row.querySelector('[name$="totalAmount"]');
-        
+            const totalAmountField = row.querySelector('[name$="product_totalAmount"]');
+
             if (unitPrice && quantity && totalAmountField) {
                 const unitPriceValue = parseFloat(unitPrice.value) || 0;
                 const quantityValue = parseInt(quantity.value) || 0;
-        
+
                 // Calculate totalAmount
                 const totalAmount = unitPriceValue * quantityValue;
-        
+
                 // Set the calculated totalAmount value
                 totalAmountField.value = totalAmount.toFixed(2);
             }
         }
-    
-        // Update the total price, grand total, and due amount
+
+        // Update the grand total and other fields
         function updateGrandTotal() {
-            let totalPrice = 0;
             let totalAmount = 0;
-        
-            // Sum up the totalAmount for all rows
+
             document.querySelectorAll('.form-row').forEach(function(row) {
-                const totalAmountField = row.querySelector('[name$="totalAmount"]');
+                const totalAmountField = row.querySelector('[name$="product_totalAmount"]');
                 totalAmount += parseFloat(totalAmountField.value) || 0;
             });
-        
-            // Calculate the totalPrice (sum of totalAmount)
-            totalPrice = totalAmount;
-        
-            // Update the total price field
-            document.getElementById('totalPrice').textContent = totalPrice.toFixed(2);
-        
-            // Get the discount amount and calculate grand total
+            
+
+            // Update the total amount and grand total fields
+            document.getElementById('alltotalAmount').textContent = totalAmount.toFixed(2);
+
             const discountAmount = parseFloat(document.getElementById('discountAmount').value) || 0;
             const grandTotal = totalAmount - discountAmount;
-        
-            // Update grand total field
             document.getElementById('grandTotal').textContent = grandTotal.toFixed(2);
-        
-            // Get the paid amount and calculate due amount
+
             const paidAmount = parseFloat(document.getElementById('paidAmount').value) || 0;
             const dueAmount = grandTotal - paidAmount;
-        
-            // Update due amount field
             document.getElementById('dueAmount').textContent = dueAmount.toFixed(2);
-        
-            // Update the hidden fields (totalPrice and dueAmount)
-            document.getElementById('id_totalPrice').value = totalPrice.toFixed(2);
-            document.getElementById('id_dueAmount').value = dueAmount.toFixed(2);
         }
-    
-        // Loop over each form row and attach event listeners to quantity and unit_price fields
+
+        // Add event listeners to product rows for calculating total amount dynamically
         document.querySelectorAll('.form-row').forEach(function(row) {
             const unitPriceField = row.querySelector('[name$="unit_price"]');
             const quantityField = row.querySelector('[name$="quantity"]');
-        
-            // Add event listeners for changes to unit_price or quantity
+
             if (unitPriceField) {
                 unitPriceField.addEventListener('input', function() {
                     calculateTotalAmount(row);
                     updateGrandTotal();
                 });
             }
+
             if (quantityField) {
                 quantityField.addEventListener('input', function() {
                     calculateTotalAmount(row);
                     updateGrandTotal();
                 });
             }
-        
-            // Initial calculation if values are pre-filled
-            calculateTotalAmount(row);
+
+            calculateTotalAmount(row);  // Initial calculation
         });
-        
-        // Listen for changes in the discountAmount or paidAmount fields
-        document.getElementById('discountAmount').addEventListener('input', function() {
-            updateGrandTotal();
-        });
-        
-        document.getElementById('paidAmount').addEventListener('input', function() {
-            updateGrandTotal();
-        });
-        
-        // Button to add new product form
-        document.getElementById("add-item-button").addEventListener("click", function() {
-            var formCount = document.querySelectorAll('.form-row').length;
-            var managementForm = document.querySelector("#id_form-TOTAL_FORMS");
-            if (!managementForm) {
-                console.error("Management form not found!");
-                return;
-            }
-    
-            var newFormCount = parseInt(managementForm.value) + 1;
-            managementForm.value = newFormCount;
-    
-            var lastForm = document.querySelector('.form-row');
-            if (!lastForm) {
-                console.error("No form row found to clone.");
-                return;
-            }
-    
-            var newForm = lastForm.cloneNode(true);
-            var formFields = newForm.querySelectorAll('input, select, textarea');
-            formFields.forEach(function(field) {
-                var name = field.name;
-                var newName = name.replace(/-0-/, `-${newFormCount}-`);
-                field.name = newName;
-                field.id = "id_" + newName;
-            });
-    
-            newForm.querySelectorAll('input').forEach(function(input) {
-                input.value = '';
-            });
-    
-            var tbody = document.querySelector("table tbody");
-            tbody.appendChild(newForm);
-    
-            const newRow = tbody.querySelector('.form-row:last-child');
+
+        // Listen to discount and paidAmount fields
+        document.getElementById('discountAmount').addEventListener('input', updateGrandTotal);
+        document.getElementById('paidAmount').addEventListener('input', updateGrandTotal);
+
+        // Add new product row functionality
+        document.getElementById('add-item-button').addEventListener('click', function() {
+            const formCount = document.querySelectorAll('.form-row').length;
+            const newRow = document.querySelector('.form-row').cloneNode(true);
+            
+            // Clear the new row values
+            newRow.querySelectorAll('input').forEach(input => input.value = '');
+
+            // Update form count dynamically
+            const managementForm = document.querySelector('#id_form-TOTAL_FORMS');
+            managementForm.value = parseInt(managementForm.value) + 1;
+
+            const tbody = document.getElementById('product-rows');
+            tbody.appendChild(newRow);
+
+            // Attach event listeners to the new row
             const unitPriceField = newRow.querySelector('[name$="unit_price"]');
             const quantityField = newRow.querySelector('[name$="quantity"]');
-    
+
             if (unitPriceField) {
                 unitPriceField.addEventListener('input', function() {
                     calculateTotalAmount(newRow);
                     updateGrandTotal();
                 });
             }
+
             if (quantityField) {
                 quantityField.addEventListener('input', function() {
                     calculateTotalAmount(newRow);
                     updateGrandTotal();
                 });
             }
-    
-            calculateTotalAmount(newRow);
-            updateGrandTotal();
+
+            calculateTotalAmount(newRow);  // Initial calculation for new row
+            updateGrandTotal();  // Update totals
         });
-    
-        // Initial grand total, total price, and due amount calculation
+
+        // Initial total update
         updateGrandTotal();
-    
-        // Add AJAX functionality to the form submission
-        document.querySelector("form").addEventListener("submit", function(event) {
-            event.preventDefault();  // Prevent the form from submitting normally
-            
-            var formData = new FormData(this);  // Collect form data
-    
-            // Send the form data via fetch
-            fetch("{% url 'selles_create' %}", {
-                method: "POST",
-                body: formData,  // Send the form data
-                headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value  // Include CSRF token for security
-                }
-            })
-            .then(response => response.json())  // Parse the JSON response
-            .then(data => {
-                if (data.success) {
-                    alert("Form submitted successfully!");
-                    // Optionally, update the page or redirect after successful submission
-                } else {
-                    alert("Error: " + data.error);  // Handle errors if necessary
-                }
-            })
-            .catch(error => {
-                console.error("Error:", error);
-                alert("An error occurred while submitting the form.");
-            });
-        });
     });
-    
 </script>
 
 {% endblock %}

@@ -75,7 +75,7 @@ class Purchase(models.Model):
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
     discount = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     paidAmount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    totalAmount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    alltotalAmount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     dueAmount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     invoice = models.OneToOneField('PurchaseInvoice', null=True, blank=True, on_delete=models.SET_NULL)
 
@@ -88,7 +88,7 @@ class PurchaseItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
-    totalAmount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    product_totalAmount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     def clean(self):
         # Ensure product is set before saving
         if not self.product:
@@ -96,8 +96,8 @@ class PurchaseItem(models.Model):
         super().clean()
 
     def save(self, *args, **kwargs):
-        if not self.totalAmount:
-            self.totalAmount = self.quantity * self.unit_price
+        if not self.product_totalAmount:
+            self.product_totalAmount = self.quantity * self.unit_price
         super().save(*args, **kwargs)
 
     
