@@ -1,0 +1,66 @@
+{% extends '../navbar.html' %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 text-center">
+      <h2>Selles Invoice</h2>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <p><strong>Invoice No:</strong> {{ invoice.invoice_number }}</p>
+      <p><strong>Invoice Date:</strong> {{ invoice.created_at|date:"F d, Y" }}</p>
+    </div>
+    <div class="col-md-6">
+      <p><strong>Supplier:</strong> {{ invoice.selles.supplier.name }}</p>
+      <p><strong>Address:</strong> {{ invoice.selles.supplier.Address }}</p>
+      {% if invoice.purchase.supplier.mobile %}
+      <p><strong>Phone:</strong> {{ invoice.selles.Customer.mobile }}</p>
+      {% endif %}
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Product Name</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Subtotal</th>
+            <th>Due Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for selles_item in invoice.selles.selles_items.all %}
+          <tr>
+            <td>{{ selles_item.product.name }}</td>
+            <td>{{ selles_item.unit_price }}</td>
+            <td>{{ selles_item.quantity }}</td>
+            <td>{{ selles_item.totalAmount }}</td>
+            <td>{{ selles_item.dueAmount }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3">Total</td>
+            <td>{{ invoice.selles.totalAmount }}</td>
+          </tr>
+          {% if invoice.discount > 0 %}
+          <tr>
+            <td colspan="3">Discount</td>
+            <td>{{ invoice.discount }}</td>
+          </tr>
+          <tr>
+            <td colspan="3"><strong>Grand Total</strong></td>
+            <td>{{ invoice.GrandTotal }}</td>
+          </tr>
+          {% endif %}
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

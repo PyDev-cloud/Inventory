@@ -119,6 +119,28 @@ class PurchaseInvoice(models.Model):
     
 
 
+class SellesInvoice(models.Model):
+    invoice_number = models.CharField(max_length=100, unique=True)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    discount = models.DecimalField(max_digits=5, decimal_places=2)
+    paid_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    created_at=models.DateTimeField(auto_now=True)
+    GrandTotal = models.DecimalField(max_digits=10, decimal_places=2, null=False, default=0)
+    dueAmount = models.DecimalField(max_digits=10, decimal_places=2, null=False, default=0)
+
+    def __str__(self):
+        return f"Invoice #{self.invoice_number}"
+
+
+
+
+
+    
+    
+
+
+
+
 class Selles(models.Model):
     customer = models.ForeignKey(Customer, related_name="customer", on_delete=models.CASCADE)
     totalPrice = models.DecimalField(max_digits=10, decimal_places=2,default=0,blank=True,null=True)
@@ -155,13 +177,13 @@ class SellesItem(models.Model):
     totalAmount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     profit = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     def __str__(self):
-        item_names = ', '.join([str(item.product.name) for item in self.selles_items_set.all()])
-        return f'Sell of {item_names} to {self.customer.name}'
+        item_names = ', '.join([str(item.product.name) for item in self.selles.selles_items.all()])
+        return f'Sell of {item_names} to {self.selles.customer.name}'
 
 # SellesItem save method
     def save(self, *args, **kwargs):
         self.totalAmount = self.quantity * self.unit_price
-
+        
         # Decrease stock on sale
         stock, created = Stock.objects.get_or_create(product=self.product)
         stock.quantity -= self.quantity  # Decrease the stock by the sold quantity

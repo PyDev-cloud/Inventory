@@ -1,6 +1,6 @@
 {% extends "navbar.html" %} {% block content %}
 <h2>Sales List</h2>
-<a href="{% url "selles_create" %}">Create Sells</a>
+<a href="{% url "create_selles" %}">Create Sells</a>
 <table>
   <thead>
     <tr>
@@ -24,9 +24,9 @@
       <td>{{ sale.dueAmount }}</td>
       <td>{{ sale.profit }}</td>
       <td>
-        <a href="{% url 'purchase_invoice_detail' sale.invoice.id %}"
+        {% comment %} <a href="{% url 'purchase_invoice_detail' sale.invoice.id %}"
           >View Invoice</a
-        >
+        > {% endcomment %}
       </td>
       <td>
         {% comment %} <a href="{% url 'selles_edit' sale.id %}">Edit</a> |

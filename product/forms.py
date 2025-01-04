@@ -89,8 +89,10 @@ class SellesForm(forms.ModelForm):
         model = Selles
         fields = ['customer', 'discountAmount', 'paidAmount','totalPrice','dueAmount']
         widgets = {
-            'customer': forms.Select(attrs={'class': 'form-control'}),  # Example widget for product (a dropdown)
+            'customer': forms.Select(attrs={'class': 'form-control'}),
+          
         }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Add an empty label (placeholder-like option) to the 'supplier' field
@@ -108,12 +110,13 @@ class sellesItemForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Add an empty label (placeholder-like option) to the 'product' field
+        # Ensure the product field has a queryset populated
         self.fields['product'].empty_label = "Select a product"  # This simulates a placeholder
         self.fields['product'].widget.attrs.update({
             'class': 'form-control'
         })
-        # You can also set custom placeholder for other fields if needed
+
+
         self.fields['quantity'].widget.attrs.update({
             'placeholder': 'Enter Quantity',
             'style': 'width: 206px;',
@@ -124,6 +127,7 @@ class sellesItemForm(forms.ModelForm):
             'class': 'form-control'
         })
 
+
 # Define the widgets for the PurchaseItemFormSet
 selles_item_widgets = {
     'product': forms.Select(attrs={'class': 'form-control'}),
@@ -133,7 +137,7 @@ selles_item_widgets = {
 }
 # Define the PurchaseItemFormSet to handle multiple PurchaseItems
 sellesItemForm = modelformset_factory(
-    PurchaseItem, 
+    SellesItem, 
     form=sellesItemForm,  # Use the custom form here
     fields=['product', 'quantity', 'unit_price'], 
     extra=10,
@@ -146,10 +150,18 @@ class FileUploadForm(forms.Form):
     file = forms.FileField()
 
 
+
 class PurchaseInvoiceForm(forms.ModelForm):
     class Meta:
-        model = PurchaseInvoice
+        model = SellesInvoice
         fields ="__all__"
+
+
+class SellesInvoiceForm(forms.ModelForm):
+    class Meta:
+        model = SellesInvoice
+        fields ="__all__"
+        
 
 
 

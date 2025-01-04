@@ -37,6 +37,7 @@ urlpatterns = [
 
     path('create_purchase/', PurchaseCreateView.as_view(), name='create_purchase'),
     path('create_selles/', SellesCreateView.as_view(), name='create_selles'),
+    path('selles/invoice/<int:invoice_id>/', SellesInvoiceDetailView.as_view(), name='selles_invoice_detail'),
 
 
     path('purchase-items/', PurchaseItemListView.as_view(), name='purchase_item_list'),  # List all PurchaseItems
