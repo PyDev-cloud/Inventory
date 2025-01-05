@@ -1,7 +1,21 @@
-{% extends "navbar.html" %} {% block content %}
-<h2>Sales List</h2>
-<a href="{% url "create_selles" %}">Create Sells</a>
-<table>
+{% extends "navbar.html" %} 
+
+
+{% load static %}
+{% block content %}
+{% if messages %}
+    <ul>
+        {% for message in messages %}
+            <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+<div class=" ">
+  <h2>This is Customer list Page</h2>
+  <a class="btn btn-primary" href="{% url "create_selles" %}" role="button">Create Selles</a>
+<div class="d-flex justify-content-center align-items-center w-100 vh-100">
+  
+<table class="table table-striped w-100">
   <thead>
     <tr>
       <th>Product</th>
@@ -24,13 +38,13 @@
       <td>{{ sale.dueAmount }}</td>
       <td>{{ sale.profit }}</td>
       <td>
-        {% comment %} <a href="{% url 'purchase_invoice_detail' sale.invoice.id %}"
+        <a href="{% url 'purchase_invoice_detail' sale.invoice.id %}"
           >View Invoice</a
-        > {% endcomment %}
+        > 
       </td>
       <td>
-        {% comment %} <a href="{% url 'selles_edit' sale.id %}">Edit</a> |
-        <a href="{% url 'selles_delete' sale.id %}">Delete</a> {% endcomment %}
+       <a href="#">Edit</a> |
+        <a href="#">Delete</a> 
       </td>
     </tr>
     {% empty %}
@@ -39,8 +53,9 @@
     </tr>
     {% endfor %}
   </tbody>
-</table>
-
+  </table>
+</div>
+</div>
 <!-- Pagination controls -->
 <div class="pagination">
   {% if sales.has_previous %}
@@ -53,5 +68,12 @@
   <a href="?page={{ sales.paginator.num_pages }}">Last &raquo;</a>
   {% endif %}
 </div>
+</div>
+</div>
+{% endblock content %}
 
-{% endblock %}
+
+   
+
+
+

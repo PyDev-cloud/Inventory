@@ -20,17 +20,17 @@
         </tr>
       </thead>
       <tbody>
-        {% for c in  Purchase%}
+        {% for c in  purchases%}
         <tr>
           <th scope="row">{{ forloop.counter }}</th>
-          <td >{{c.productname}}</td>
-          <td>{{c.suppliername}}</td>
+          <td >{{c.product.name}}</td>
+          <td>{{c.purchase.supplier.name}}</td>
           <td>{{c.quantity}}</td>
-          <td>{{c.totalAmount}}</td>
-          <td>{{c.discount}}</td>
-          <td>{{c.paidAmount}}</td>
-          <td>{{c.dueAmount}}</td>
-          <td>{{c.create_at}}</td>
+          <td>{{c.purchase.alltotalAmount}}</td>
+          <td>{{c.purchase.discount}}</td>
+          <td>{{c.purchase.paidAmount}}</td>
+          <td>{{c.purchase.dueAmount}}</td>
+          <td>{{c.purchase.created_at}}</td>
           
             <td>
                 

@@ -1,7 +1,14 @@
 {% extends "../navbar.html" %}
 {% load static %}
 {% block content %}
-<div class="container ">
+{% if messages %}
+    <ul>
+        {% for message in messages %}
+            <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+<div class=" ">
   <h2>This is Customer list Page</h2>
   <a class="btn btn-primary" href="{% url "customer" %}" role="button">Create Category</a>
 <div class="d-flex justify-content-center align-items-center w-100 vh-100">

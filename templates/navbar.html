@@ -371,9 +371,10 @@
       <div class="content">
         {% block content %}{% endblock content %}
       </div>
+      {% include "Footer.html" %}
         
    
-      <!-- Footer -->
+      {% comment %} <!-- Footer -->
       <footer class="site-footer">
         <div class="footer-inner bg-white">
           <div class="row">
@@ -383,7 +384,7 @@
             </div>
           </div>
         </div>
-      </footer>
+      </footer> {% endcomment %}
       <!-- /.site-footer -->
     </div>
     <!-- /#right-panel -->
@@ -417,4 +418,5 @@
 
 
   </body>
+
 </html>

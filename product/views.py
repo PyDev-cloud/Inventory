@@ -497,7 +497,16 @@ class PurchaseCreateView(CreateView):
                     purchase_item = purchase_item_form.save(commit=False)
                     purchase_item.purchase = self.object  # Link each item to the purchase
                     purchase_item.save()
+                   # After saving the item, update stock quantity for the product
+                    product = purchase_item.product
+                    purchased_quantity = purchase_item.quantity
 
+                    # Update or create the stock entry
+                    stock, created = Stock.objects.get_or_create(product=product)
+
+                    # Update the stock quantity by adding the purchased quantity
+                    stock.quantity += purchased_quantity
+                    stock.save()
                 # After saving the items, recalculate the totalAmount and dueAmount for the purchase
                 self.object.product_totalAmount = sum(item.product_totalAmount for item in self.object.purchase_items.all())
                 self.object.dueAmount = (self.object.product_totalAmount - self.object.discount)- self.object.paidAmount
@@ -548,14 +557,6 @@ class PurchaseInvoiceDetailView(CreateView):
         return context
     
 
-class PurchaseListView(ListView):
-     model = Purchase
-     template_name = "purchase/purchaseList.html"
-     def get_context_data(self, **kwargs):
-            context = super().get_context_data(**kwargs)
-            context["Purchase"] = self.model.objects.all()
-            return context
-
 
 
 
@@ -571,7 +572,7 @@ class SellesListView(ListView):
 
 
 class SellesInvoiceDetailView(CreateView):
-    model = Purchase
+    model = Selles
     template_name = 'Receipt/SellesInvoice.html'  # The template where the invoice is shown
     form_class=SellesInvoiceForm
     def get_context_data(self, **kwargs):
@@ -579,9 +580,8 @@ class SellesInvoiceDetailView(CreateView):
         invoice_id = self.kwargs['invoice_id']
         invoice = SellesInvoice.objects.get(id=invoice_id)
         context['invoice'] = invoice
-
-        Selles = Selles.objects.filter(invoice=invoice)
-        context['selles'] = Selles
+        selles = Selles.objects.filter(invoice=invoice)
+        context['selles'] = selles
         return context
 
 
@@ -889,6 +889,7 @@ class StockView(View):
 
         # Build the filter conditions dynamically
         stock_queryset = Stock.objects.all()
+        print("Initial queryset (no filters):", stock_queryset.query)
 
         if product_name:
             stock_queryset = stock_queryset.filter(product__name__icontains=product_name)
@@ -1013,26 +1014,28 @@ class DashboardView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        current_month = datetime.now().month
-        current_year = datetime.now().year
+        current_year = timezone.now().year
+        current_month = timezone.now().month
         
         # Total Purchases
-        total_purchases = Purchase.objects.filter(create_at__month=current_month, create_at__year=current_year)
-        total_purchase_amount = total_purchases.aggregate(Sum('totalAmount'))['totalAmount__sum'] or 0
+        total_purchases = Purchase.objects.filter(created_at__month=current_month, created_at__year=current_year)
+
+        total_purchase_amount = total_purchases.aggregate(Sum('alltotalAmount'))['alltotalAmount__sum'] or 0
         total_purchase_paid = total_purchases.aggregate(Sum('paidAmount'))['paidAmount__sum'] or 0
         total_purchase_due = total_purchase_amount - total_purchase_paid
 
         # Total Sales
-        total_sales = Selles.objects.filter(create_at__month=current_month, create_at__year=current_year)
+        total_sales = Selles.objects.filter(created_at__month=current_month, created_at__year=current_year)
         total_sales_amount = total_sales.aggregate(Sum('totalPrice'))['totalPrice__sum'] or 0
         total_sales_paid = total_sales.aggregate(Sum('paidAmount'))['paidAmount__sum'] or 0
-        total_profit=total_sales.aggregate(Sum('profit'))['profit__sum'] or 0
+        #total_profit=total_sales.aggregate(Sum('profit'))['profit__sum'] or 0
         total_sales_due = total_sales_amount - total_sales_paid
         
         
 
         # Total Invoices
-        total_invoices = PurchaseInvoice.objects.filter(invoice_date__month=current_month, invoice_date__year=current_year)
+        total_invoices = PurchaseInvoice.objects.filter(created_at__month=current_month, created_at__year=current_year)
+
         total_invoice_amount = total_invoices.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
         total_invoice_paid = total_invoices.aggregate(Sum('paid_amount'))['paid_amount__sum'] or 0
         total_invoice_due = total_invoice_amount - total_invoice_paid
@@ -1041,19 +1044,19 @@ class DashboardView(TemplateView):
         total_profit = total_sales_amount - total_purchase_amount  # Profit = Sales - Purchases
 
         # Daily Sales
-        today_sales = Selles.objects.filter(create_at=date.today())
+        today_sales = Selles.objects.filter(created_at=date.today())
         daily_sales_amount = today_sales.aggregate(Sum('totalPrice'))['totalPrice__sum'] or 0
-        daily_profit=today_sales.aggregate(Sum('profit'))['profit__sum'] or 0
+        #daily_profit=today_sales.aggregate(Sum('profit'))['profit__sum'] or 0
 
         # Daily Purchases
-        today_purchases = Purchase.objects.filter(create_at=date.today())
-        daily_purchase_amount = today_purchases.aggregate(Sum('totalAmount'))['totalAmount__sum'] or 0
+        today_purchases = Purchase.objects.filter(created_at=date.today())
+        daily_purchase_amount = today_purchases.aggregate(Sum('alltotalAmount'))['alltotalAmount__sum'] or 0
 
       
 
 
         # Daily Invoices
-        today_invoices = PurchaseInvoice.objects.filter(invoice_date=date.today())
+        today_invoices = PurchaseInvoice.objects.filter(created_at=date.today())
         daily_invoice_amount = today_invoices.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
 
         context.update({
@@ -1074,7 +1077,7 @@ class DashboardView(TemplateView):
             'today_purchases': today_purchases,
             'today_invoices': today_invoices,
             'total_profit':total_profit,
-            'daily_profit':daily_profit,
+            
         })
 
         return context
@@ -1083,7 +1086,7 @@ class DashboardView(TemplateView):
 
 
 class PurchaseListView(ListView):
-    model = Purchase
+    model = PurchaseItem
     template_name = 'purchase/purchaseList.html'  # Replace with your actual template
     context_object_name = 'purchases'
 
@@ -1094,7 +1097,7 @@ class PurchaseListView(ListView):
         date_to_filter = self.request.GET.get('date_to', None)
 
         # Start with all Purchase objects
-        queryset = Purchase.objects.all()
+        queryset = PurchaseItem.objects.all()
 
         # Apply filtering based on due amount
         if due_amount_filter:

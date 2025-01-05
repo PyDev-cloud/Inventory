@@ -78,6 +78,10 @@ class Purchase(models.Model):
     alltotalAmount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     dueAmount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     invoice = models.OneToOneField('PurchaseInvoice', null=True, blank=True, on_delete=models.SET_NULL)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+
 
     def __str__(self):
         return f"Purchase {self.id}"
@@ -147,13 +151,15 @@ class Selles(models.Model):
     discountAmount = models.DecimalField(max_digits=10, decimal_places=2,default=0)
     paidAmount = models.DecimalField(max_digits=10, decimal_places=2,default=0)
     dueAmount = models.DecimalField(max_digits=10, decimal_places=2, default=0,blank=True,null=True)
-    invoice = models.OneToOneField(PurchaseInvoice, null=True, blank=True, on_delete=models.SET_NULL)  # Link to Invoice
+    invoice = models.OneToOneField(SellesInvoice, null=True, blank=True, on_delete=models.SET_NULL)  # Link to Invoice
+    created_at = models.DateTimeField(auto_now_add=True)
     
-    
+   
+
     def save(self, *args, **kwargs):
         # Ensure the invoice is created automatically if not exists
         if not self.invoice:
-            invoice = PurchaseInvoice.objects.create(
+            invoice = SellesInvoice.objects.create(
                 invoice_number=str(uuid.uuid4()),  # Generate a unique invoice number
                 total_amount=self.totalPrice,
                 discount=self.discountAmount,

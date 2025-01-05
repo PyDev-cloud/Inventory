@@ -1,99 +1,99 @@
 {% extends "../navbar.html" %} {% load static %}
  {% block content %}
  <div class="d-flex ">
-  <div class="container">
-    <div class="row ">
-      <div class="col-md-8">
-        <h2 class="text-center mb-4">Create Product</h2>
-<form method="post" enctype="multipart/form-data" >
-  {% csrf_token %}
     <div class="container">
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        
-        <!-- Product Name and Thumbnail Image -->
         <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="id_name" class="form-label">Product Name</label>
-                {{ form.name }}
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="id_thumbnail_image" class="form-label">Thumbnail Image</label>
-                {{ form.thumbnail_image }}
-            </div>
-        </div>
+            <div class="col-md-12">
+                <h2 class="text-center mb-4">Create Product</h2>
+                <hr>
+                <form method="post" enctype="multipart/form-data" >
+                    {% csrf_token %}
+                    <div class="container mx-5">               
+                        <!-- Product Name and Thumbnail Image -->
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="id_name" class="form-label">Product Name</label>
+                                {{ form.name }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="id_thumbnail_image" class="form-label">Thumbnail Image</label>
+                                {{ form.thumbnail_image }}
+                            </div>
+                        </div>
 
-        <!-- Quantity and Purchase Price -->
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="id_category" class="form-label">Category</label>
-                {{ form.category }}
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="id_sub_category" class="form-label">Subcategory</label>
-                {{ form.SubCategory }}
-            </div>
+                        <!-- Quantity and Purchase Price -->
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="id_category" class="form-label">Category</label>
+                                {{ form.category }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="id_sub_category" class="form-label">Subcategory</label>
+                                {{ form.SubCategory }}
+                            </div>
+                            
+                        </div>
+
+                        <!-- Sale Price and Category -->
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="id_sale_price" class="form-label">Sale Price</label>
+                                {{ form.sale_price }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="id_purchase_price" class="form-label">Purchase Price</label>
+                                {{ form.purchase_price }}
+                            </div>
+                        </div>
+
+                        <!-- Subcategory and Unit Measurement -->
+                        <div class="row">
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="id_unit_mesurement" class="form-label">Unit Measurement</label>
+                                {{ form.unit_mesurement }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="id_unit_type" class="form-label">Unit Type</label>
+                                {{ form.unit_type }}
+                            </div>
+                        </div>
+                        <!-- SKU -->
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="id_sku" class="form-label">SKU</label>
+                                {{ form.sku }}
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="mb-3">
+                            <button type="submit" class="btn btn-primary">
+                                {% if form.instance.pk %}Update{% else %}Create{% endif %}
+                            </button>
+                            <a href="{% url 'productlist' %}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </div>
+                </form>
             
-        </div>
-
-        <!-- Sale Price and Category -->
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="id_sale_price" class="form-label">Sale Price</label>
-                {{ form.sale_price }}
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="id_purchase_price" class="form-label">Purchase Price</label>
-                {{ form.purchase_price }}
             </div>
         </div>
 
-        <!-- Subcategory and Unit Measurement -->
-        <div class="row">
-            
-            <div class="col-md-4 mb-3">
-                <label for="id_unit_mesurement" class="form-label">Unit Measurement</label>
-                {{ form.unit_mesurement }}
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="id_unit_type" class="form-label">Unit Type</label>
-                {{ form.unit_type }}
-            </div>
-        </div>
-        <!-- SKU -->
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="id_sku" class="form-label">SKU</label>
-                {{ form.sku }}
-            </div>
-        </div>
 
-        <!-- Action Buttons -->
-        <div class="mb-3">
-            <button type="submit" class="btn btn-primary">
-                {% if form.instance.pk %}Update{% else %}Create{% endif %}
+    </div>
+    <div class="col-md-4 mx-5 mt-5 ">
+        <hr>
+            <h3 class="mb-4">Upload CSV or Excel File</h3>
+            <a href="#">Download Sample File</a>
+            <form method="post" enctype="multipart/form-data">
+            {% csrf_token %} {{ file_form.as_p }}
+            <!-- Excel file upload form fields -->
+            <button type="submit" class="btn btn-success btn-lg w-100">
+                Upload Excel
             </button>
-            <a href="{% url 'productlist' %}" class="btn btn-secondary">Cancel</a>
+            </form>
         </div>
-    </form>
-</div>
-</div>
-</div>
-
-
-</div>
-<div class="col-md-4">
-        <h3 class="mb-4">Upload CSV or Excel File</h3>
-        <a href="#">Download Sample File</a>
-        <form method="post" enctype="multipart/form-data">
-          {% csrf_token %} {{ file_form.as_p }}
-          <!-- Excel file upload form fields -->
-          <button type="submit" class="btn btn-success btn-lg w-100">
-            Upload Excel
-          </button>
-        </form>
-      </div>
-<div>
+    <div>
 </div>
 
 {% endblock %}
