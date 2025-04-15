@@ -17,7 +17,7 @@ from datetime import datetime
 from datetime import date
 from django.db.models.functions import TruncMonth
 from django.db import transaction
-
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 
 from django.views.generic import *
@@ -25,7 +25,7 @@ from .models import *
 from .forms import *
 
 #category Creater View 
-class CategoryAndFileUploadView(FormView):
+class CategoryAndFileUploadView(LoginRequiredMixin,FormView):
     model = Category
     form_class = CategoryForm
     template_name = "category/categorycreate.html"
@@ -121,7 +121,7 @@ class CategoryAndFileUploadView(FormView):
 
 
 
-class categoryViewlist(ListView):
+class categoryViewlist(LoginRequiredMixin,ListView):
     model = Category
     template_name = "category/categoryList.html"
     paginate_by = 7
@@ -133,7 +133,7 @@ class categoryViewlist(ListView):
         return context
         
 #Category Update View 
-class CategoryUpdateView(UpdateView):
+class CategoryUpdateView(LoginRequiredMixin,UpdateView):
     model = Category
     form_class = CategoryForm  # The form used for editing
     template_name = 'category/categoryUpdate.html'  # The template to render the form
@@ -146,7 +146,7 @@ class CategoryUpdateView(UpdateView):
        queryset = Category.objects.filter(pk=self.kwargs['pk'])
        try:
             obj=queryset.get()
-       except Category.DoesNotExixt:
+       except Category.DoesNotExist:
             raise Http404("category not found or inactive")
        return obj
        
@@ -163,7 +163,7 @@ class CategoryUpdateView(UpdateView):
               
 
 #SubCategory View
-class SubcategoryViewlist(ListView):
+class SubcategoryViewlist(LoginRequiredMixin,ListView):
         model=SubCategory
         template_name="subcategory/SubcategoryList.html"
         paginate_by=10
@@ -172,7 +172,7 @@ class SubcategoryViewlist(ListView):
             context["subcategory"] = SubCategory.objects.all()
             return context
 
-class SubCategoryAndFileUploadView(FormView):
+class SubCategoryAndFileUploadView(LoginRequiredMixin,FormView):
     # This view will handle both SubCategory form submission and file uploads
     template_name = 'subcategory/Subcategorycreate.html'
     # We use both forms (manual form and file upload form)
@@ -312,7 +312,7 @@ class SubCategoryAndFileUploadView(FormView):
 
    
 #SubCategory Update View
-class SubCategoryUpdateView(UpdateView):
+class SubCategoryUpdateView(LoginRequiredMixin,UpdateView):
     model = SubCategory
     form_class = SubCategoryForm  # The form used for editing
     template_name = 'subcategory/subcategoryUpdate.html'  # The template to render the form
@@ -325,13 +325,13 @@ class SubCategoryUpdateView(UpdateView):
        queryset = SubCategory.objects.filter(pk=self.kwargs['pk'])
        try:
             obj=queryset.get()
-       except SubCategory.DoesNotExixt:
+       except SubCategory.DoesNotExist:
             raise Http404("category not found or inactive")
        return obj
     
 
 #product List View 
-class Productlist(ListView):
+class Productlist(LoginRequiredMixin,ListView):
         model=Product
         template_name="product/productList.html"
         
@@ -340,7 +340,7 @@ class Productlist(ListView):
             context["product"] = self.model.objects.all()
             return context
 
-class ProductCreateView(CreateView):
+class ProductCreateView(LoginRequiredMixin,CreateView):
     model = Product
     form_class = ProductForm
     template_name = 'product/productcreate.html'  # Your template to render the form
@@ -351,7 +351,7 @@ class ProductCreateView(CreateView):
         return super().form_valid(form)
 
 # Update a Product (for editing an existing product)
-class ProductUpdateView(UpdateView):
+class ProductUpdateView(LoginRequiredMixin, UpdateView):
     model = Product
     form_class = ProductForm
     template_name = 'product/productcreate.html'  # Your template to render the form
@@ -362,7 +362,7 @@ class ProductUpdateView(UpdateView):
         return super().form_valid(form)
 
 
-class ProductUpdateView(UpdateView):
+class ProductUpdateView(LoginRequiredMixin,UpdateView):
     model = Product
     form_class = ProductForm  # The form used for editing
     template_name = 'product/productupdate.html'  # The template to render the form
@@ -375,12 +375,12 @@ class ProductUpdateView(UpdateView):
        queryset = Product.objects.filter(pk=self.kwargs['pk'])
        try:
             obj=queryset.get()
-       except Product.DoesNotExixt:
+       except Product.DoesNotExist:
             raise Http404("category not found or inactive")
        return obj
 
 
-class SupplierList(ListView):
+class SupplierList(LoginRequiredMixin,ListView):
         model=Supplier
         template_name="supplier/supplierList.html"
         
@@ -390,7 +390,7 @@ class SupplierList(ListView):
             return context
 
 
-class SupplierCreate(CreateView):
+class SupplierCreate(LoginRequiredMixin,CreateView):
     model=Supplier
     form_class=SupplierForm
     template_name="supplier/SupplierCreate.html"
@@ -407,7 +407,7 @@ class SupplierCreate(CreateView):
     
 
 #Customer List View
-class Customerlist(ListView):
+class Customerlist(LoginRequiredMixin,ListView):
         model=Customer
         template_name="customer/customerlist.html"
         
@@ -417,7 +417,7 @@ class Customerlist(ListView):
             return context
 
 
-class CustomerCreate(CreateView):
+class CustomerCreate(LoginRequiredMixin,CreateView):
     model=Customer
     form_class=CustomarForm
     template_name="customer/Customercreate.html"
@@ -432,7 +432,7 @@ class CustomerCreate(CreateView):
         return super().form_invalid(form)
 
 
-class CustomerUpdateView(UpdateView):
+class CustomerUpdateView(LoginRequiredMixin,UpdateView):
     model = Customer
     form_class = CustomarForm  # The form used for editing
     template_name = 'customer/customerUpdate.html'  # The template to render the form
@@ -445,14 +445,14 @@ class CustomerUpdateView(UpdateView):
        queryset = Customer.objects.filter(pk=self.kwargs['pk'])
        try:
             obj=queryset.get()
-       except Customer.DoesNotExixt:
+       except Customer.DoesNotExist:
             raise Http404("category not found or inactive")
        return obj
 
 
 
 
-class InvoiceView(TemplateView):
+class InvoiceView(LoginRequiredMixin,TemplateView):
     template_name = 'Receipt/purchaseRecipt.html'
 
     def get_context_data(self, **kwargs):
@@ -471,7 +471,7 @@ class InvoiceView(TemplateView):
         return context
     
 
-class PurchaseCreateView(CreateView):
+class PurchaseCreateView(LoginRequiredMixin,CreateView):
     model = Purchase
     form_class = PurchaseForm
     template_name = 'purchase/Purchasecreate.html'
@@ -542,7 +542,7 @@ class PurchaseCreateView(CreateView):
         return context
 
 # Create a view to show the Purchase Invoice
-class PurchaseInvoiceDetailView(CreateView):
+class PurchaseInvoiceDetailView(LoginRequiredMixin, CreateView):
     model = Purchase
     template_name = 'Receipt/PurchaseInvoice.html'  # The template where the invoice is shown
     form_class=PurchaseInvoiceForm
@@ -560,7 +560,7 @@ class PurchaseInvoiceDetailView(CreateView):
 
 
 
-class SellesListView(ListView):
+class SellesListView(LoginRequiredMixin, ListView):
     model = Selles
     template_name = 'Sells/SellesList.html'  # Template to render the list
     context_object_name = 'sales'  # Context variable name for the list
@@ -571,7 +571,7 @@ class SellesListView(ListView):
 
 
 
-class SellesInvoiceDetailView(CreateView):
+class SellesInvoiceDetailView(LoginRequiredMixin, CreateView):
     model = Selles
     template_name = 'Receipt/SellesInvoice.html'  # The template where the invoice is shown
     form_class=SellesInvoiceForm
@@ -587,7 +587,7 @@ class SellesInvoiceDetailView(CreateView):
 
 
 
-class SellesCreateView(CreateView):
+class SellesCreateView(LoginRequiredMixin,CreateView):
     model = Selles
     form_class = SellesForm
     template_name = 'Sells/SellsCreate.html'
@@ -688,7 +688,7 @@ class SellesCreateView(CreateView):
 
 
 
-class DailyReportView(TemplateView):
+class DailyReportView(LoginRequiredMixin,TemplateView):
     template_name = 'report/DailyReport.html'
 
     def get_context_data(self, **kwargs):
@@ -729,7 +729,7 @@ class DailyReportView(TemplateView):
         return context
 
 
-class WeeklyReportView(TemplateView):
+class WeeklyReportView(LoginRequiredMixin, TemplateView):
     template_name = 'report/weekly_report.html'
 
     def get_context_data(self, **kwargs):
@@ -771,7 +771,7 @@ class WeeklyReportView(TemplateView):
         })
         return context
 
-class MonthlyReportView(TemplateView):
+class MonthlyReportView(LoginRequiredMixin, TemplateView):
     template_name = 'report/monthly_report.html'
 
     def get_context_data(self, **kwargs):
@@ -814,7 +814,7 @@ class MonthlyReportView(TemplateView):
         return context
 
 
-class CustomDateReportView(TemplateView):
+class CustomDateReportView(LoginRequiredMixin, TemplateView):
     template_name = 'report/DailyReport.html'
 
     def get_context_data(self, **kwargs):
@@ -877,7 +877,7 @@ class CustomDateReportView(TemplateView):
 
 
 
-class StockView(View):
+class StockView(LoginRequiredMixin, View):
     template_name = "Stock/Stock.html"
     
     def get(self, request, *args, **kwargs):
@@ -1009,7 +1009,7 @@ def export_stock_excel(request):
         return response
 
 
-class DashboardView(TemplateView):
+class DashboardView(LoginRequiredMixin,TemplateView):
     template_name = 'Dashboard/dashboard.html'
 
     def get_context_data(self, **kwargs):
@@ -1085,7 +1085,7 @@ class DashboardView(TemplateView):
 
 
 
-class PurchaseListView(ListView):
+class PurchaseListView(LoginRequiredMixin, ListView):
     model = PurchaseItem
     template_name = 'purchase/purchaseList.html'  # Replace with your actual template
     context_object_name = 'purchases'
@@ -1183,7 +1183,7 @@ class PurchaseListView(ListView):
 
 
 
-class PurchaseItemListView(ListView):
+class PurchaseItemListView(LoginRequiredMixin, ListView):
     model = PurchaseItem
     template_name = 'purchaseitems.html'  # Template for rendering the list
     context_object_name = 'purchase_items'     # The context name for the list of items
