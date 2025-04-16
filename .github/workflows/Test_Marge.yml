@@ -33,15 +33,21 @@ jobs:
   deploy:
     name: Deploy Branch
     runs-on: ubuntu-latest
-    needs: test  # Ensure deployment only happens if tests pass
-    if: success()  # Only run deploy if tests pass
+    needs: test
+    if: success()
 
     steps:
     - name: Checkout Code
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        ref: master
 
     - name: Merge testing branch into deployment
       run: |
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+        git fetch origin
         git checkout deployment
         git pull origin deployment
         git merge testing --no-ff
