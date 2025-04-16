@@ -50,5 +50,5 @@ jobs:
         git fetch origin
         git checkout deployment
         git pull origin deployment
-        git merge testing --no-ff
+        git merge master --no-ff
         git push origin deployment
