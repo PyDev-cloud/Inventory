@@ -76,7 +76,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: 22
           script: |
-            cd /home/ubuntu/Inventory
+            cd /home/ubuntu
             git pull origin deployment
             source env/bin/activate
             pip install -r requirements.txt
