@@ -12,12 +12,12 @@
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-md-5 mr-4">
-        <h2 class="text-center mb-4">Create Supplier</h2>
+        <h2 class="text-center mb-4">Create New Subcategory</h2>
         <form method="post">
           {% csrf_token %} {{ subcategory_form.as_p }}
           <!-- Render the form fields -->
           <button type="submit" class="btn btn-primary btn-lg w-100">
-            Add Category
+            Add Subcategory
           </button>
         </form>
       </div>
