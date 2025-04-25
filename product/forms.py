@@ -2,37 +2,91 @@ from django import forms
 from .models import *  # Make sure to import your Product model
 from django.forms import inlineformset_factory, modelformset_factory
 
+from django import forms
+from .models import Product
+import random
+import string
+
 class ProductForm(forms.ModelForm):
     class Meta:
-        model = Product  # Use 'model' instead of 'models'
+        model = Product
         fields = [
-            'name', 'thumbnail_image', 'purchase_price', 
-            'sale_price', 'category', 'SubCategory', 
-            'unit_mesurement', 'unit_type',  'sku'
+            'name', 'thumbnail_image', 'purchase_price',
+            'sale_price', 'category', 'SubCategory',
+            'unit_mesurement', 'unit_type', 'sku','status'
         ]
-        widgets={
-            'name': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name','style': 'font-size: 16px;'}),
-            'category': forms.Select(attrs={'class': 'form-control form-control-lg','style': 'font-size: 16px;'}),
-            'purchase_price': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name','style': 'font-size: 16px;'}),
-            'sale_price': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name','style': 'font-size: 16px;'}),
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control form-control-lg',
+                'placeholder': 'Enter product name',
+                'style': 'font-size: 16px;',
+            }),
+            'category': forms.Select(attrs={'class': 'form-control form-control-lg', 'style': 'font-size: 16px;'}),
+            'purchase_price': forms.NumberInput(attrs={
+                    'class': 'form-control form-control-lg',
+                    'placeholder': 'Enter purchase price',
+                    'style': 'font-size: 16px;',
+                    'id': 'purchase_price'  # Important!
+                }),
+                'sale_price': forms.NumberInput(attrs={
+                    'class': 'form-control form-control-lg',
+                    'placeholder': 'Enter sale price',
+                    'style': 'font-size: 16px;',
+                    'id': 'sale_price'  # Important!
+                }),
             'SubCategory': forms.Select(attrs={'class': 'form-control form-control-lg', 'style': 'font-size: 16px;'}),
-            'unit_mesurement': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name','style': 'font-size: 16px;'}),
-            'unit_type': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name','style': 'font-size: 16px;'}),
-            'sku': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name','style': 'font-size: 16px;'}),
-
+            'unit_mesurement': forms.TextInput(attrs={
+                'class': 'form-control form-control-lg',
+                'placeholder': 'Enter unit measurement',
+                'style': 'font-size: 16px;',
+            }),
+            'unit_type': forms.TextInput(attrs={
+                'class': 'form-control form-control-lg',
+                'placeholder': 'Enter unit type',
+                'style': 'font-size: 16px;',
+            }),
+            'sku': forms.TextInput(attrs={
+                'class': 'form-control form-control-lg',
+                'placeholder': 'Enter SKU',
+                'style': 'font-size: 16px;',
+                
+            }),
+            'status': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+                'role': 'switch',  # Bootstrap 5 switch styling
+                'style': 'margin-left: 3.5rem; transform: scale(1.3);',
+})
         }
-    # You can customize the widgets here
+    def clean_name(self):
+        name = self.cleaned_data.get('name')
+        if Product.objects.filter(name__iexact=name).exists():
+            raise ValidationError("A product with this name already exists.")
+        return name    
+
+    def clean(self):
+        cleaned_data = super().clean()
+        purchase_price = cleaned_data.get('purchase_price')
+        sale_price = cleaned_data.get('sale_price')
+
+        if purchase_price and sale_price and sale_price< purchase_price :
+            raise forms.ValidationError("sale price cannot be greater than Purchase price.")
+       
     
-        
 
 
 class SubCategoryForm(forms.ModelForm):
     class Meta:
-        model=SubCategory
-        fields=['name','category']
-        widgets={
-            'name': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name','style': 'font-size: 16px;'}),
-            'category': forms.Select(attrs={'class': 'form-control form-control-lg'})
+        model = SubCategory
+        fields = ['name', 'category']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control form-control-lg',
+                'placeholder': 'Enter subcategory name',
+                'style': 'font-size: 16px;',
+            }),
+            'category': forms.Select(attrs={
+                'class': 'form-control form-control-lg',
+            }),
         }
         
         
@@ -56,10 +110,10 @@ class SupplierForm(forms.ModelForm):
         model=Supplier
         fields=['name','email','mobile','Address']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name','style': 'font-size: 16px;'}),
-            'email': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name','style': 'font-size: 16px;'}),
-            'mobile': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name','style': 'font-size: 16px;'}),
-            'Address': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name','style': 'font-size: 16px;'}),
+            'name': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter supplier name','style': 'font-size: 16px;'}),
+            'email': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter supplier email','style': 'font-size: 16px;'}),
+            'mobile': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter supplier mobile','style': 'font-size: 16px;'}),
+            'Address': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter supplier Address','style': 'font-size: 16px;'}),
           
 
         }
@@ -71,10 +125,10 @@ class CustomarForm(forms.ModelForm):
         model=Customer
         fields=['name','Email','Mobile','Address']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name','style': 'font-size: 16px;'}),
-            'Email': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name','style': 'font-size: 16px;'}),
-            'Mobile': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name','style': 'font-size: 16px;'}),
-            'Address': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter category name','style': 'font-size: 16px;'}),
+            'name': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter customer name','style': 'font-size: 16px;'}),
+            'Email': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter customer email','style': 'font-size: 16px;'}),
+            'Mobile': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter customer mobile','style': 'font-size: 16px;'}),
+            'Address': forms.TextInput(attrs={'class': 'form-control form-control-lg', 'placeholder': 'Enter customer address','style': 'font-size: 16px;'}),
           
 
         }

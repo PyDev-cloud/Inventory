@@ -1,99 +1,111 @@
-{% extends "../navbar.html" %} {% load static %}
- {% block content %}
- <div class="d-flex ">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <h2 class="text-center mb-4">Create New Product</h2>
-                <hr>
-                <form method="post" enctype="multipart/form-data" >
-                    {% csrf_token %}
-                    <div class="container mx-5">               
-                        <!-- Product Name and Thumbnail Image -->
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label for="id_name" class="form-label">Product Name</label>
-                                {{ form.name }}
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label for="id_thumbnail_image" class="form-label">Thumbnail Image</label>
-                                {{ form.thumbnail_image }}
-                            </div>
-                        </div>
+{% extends "../navbar.html" %}
+{% load static %}
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center min-vh-100">
+  <div class="card shadow-lg p-4 w-100" style="max-width: 900px; border-radius: 20px;">
+    <h2 class="text-center mb-4 text-primary">Create New Product</h2>
+    <hr>
 
-                        <!-- Quantity and Purchase Price -->
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label for="id_category" class="form-label">Category</label>
-                                {{ form.category }}
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label for="id_sub_category" class="form-label">Subcategory</label>
-                                {{ form.SubCategory }}
-                            </div>
-                            
-                        </div>
-
-                        <!-- Sale Price and Category -->
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label for="id_sale_price" class="form-label">Sale Price</label>
-                                {{ form.sale_price }}
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label for="id_purchase_price" class="form-label">Purchase Price</label>
-                                {{ form.purchase_price }}
-                            </div>
-                        </div>
-
-                        <!-- Subcategory and Unit Measurement -->
-                        <div class="row">
-                            
-                            <div class="col-md-4 mb-3">
-                                <label for="id_unit_mesurement" class="form-label">Unit Measurement</label>
-                                {{ form.unit_mesurement }}
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label for="id_unit_type" class="form-label">Unit Type</label>
-                                {{ form.unit_type }}
-                            </div>
-                        </div>
-                        <!-- SKU -->
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label for="id_sku" class="form-label">SKU</label>
-                                {{ form.sku }}
-                            </div>
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="mb-3">
-                            <button type="submit" class="btn btn-primary">
-                                {% if form.instance.pk %}Update{% else %}Create{% endif %}
-                            </button>
-                            <a href="{% url 'productlist' %}" class="btn btn-secondary">Cancel</a>
-                        </div>
-                    </div>
-                </form>
-            
+    <form method="post" enctype="multipart/form-data" id="product-form">
+      {% csrf_token %}
+      <div class="row g-4">
+        <!-- Product Name and Thumbnail -->
+        <div class="col-md-6">
+          <label for="id_name" class="form-label">Product Name</label>
+          {{ form.name }}
+          {% if form.name.errors %}
+            <div class="text-danger">
+            {% for error in form.name.errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
             </div>
+        {% endif %}
+        </div>
+        <div class="col-md-6">
+          <label for="id_thumbnail_image" class="form-label">Thumbnail Image</label>
+          {{ form.thumbnail_image }}
         </div>
 
-
-    </div>
-    <div class="col-md-4 mx-5 mt-5 ">
-        <hr>
-            <h3 class="mb-4">Upload CSV or Excel File</h3>
-            <a href="#">Download Sample File</a>
-            <form method="post" enctype="multipart/form-data">
-            {% csrf_token %} {{ file_form.as_p }}
-            <!-- Excel file upload form fields -->
-            <button type="submit" class="btn btn-success btn-lg w-100">
-                Upload Excel
-            </button>
-            </form>
+        <!-- Category and Subcategory -->
+        <div class="col-md-6">
+          <label for="id_category" class="form-label">Category</label>
+          {{ form.category }}
         </div>
-    <div>
+        <div class="col-md-6">
+          <label for="id_sub_category" class="form-label">Subcategory</label>
+          {{ form.SubCategory }}
+        </div>
+
+        <!-- Sale Price and Purchase Price -->
+        <div class="col-md-6">
+          <label for="id_sale_price" class="form-label">Sale Price</label>
+          {{ form.sale_price }}
+        </div>
+        <div class="col-md-6">
+          <label for="id_purchase_price" class="form-label">Purchase Price</label>
+          {{ form.purchase_price }}
+          <div id="price-error" class="text-danger mt-1" style="font-size: 14px;"></div>
+        </div>
+
+        <!-- Unit Measurement and Type -->
+        <div class="col-md-6">
+          <label for="id_unit_mesurement" class="form-label">Unit Measurement</label>
+          {{ form.unit_mesurement }}
+        </div>
+        <div class="col-md-6">
+          <label for="id_unit_type" class="form-label">Unit Type</label>
+          {{ form.unit_type }}
+        </div>
+
+        <!-- SKU -->
+        <div class="col-md-6">
+          <label for="id_sku" class="form-label">SKU</label>
+          {{ form.sku }}
+        </div>
+        <div class="form-check form-switch my-3">
+            {{ form.status }}
+            {{ form.status.label_tag }}
+            {% if form.status.errors %}
+              <div class="text-danger">
+                {% for error in form.status.errors %}
+                  <small>{{ error }}</small>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+      </div>
+      
+
+      <!-- Buttons -->
+      <div class="d-flex justify-content-between mt-4">
+        <a href="{% url 'productlist' %}" class="btn btn-outline-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary px-4">
+          {% if form.instance.pk %}Update{% else %}Create{% endif %}
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 
+<!-- JavaScript for Price Validation -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const purchaseInput = document.getElementById('purchase_price');
+    const saleInput = document.getElementById('sale_price');
+    const form = document.getElementById('product-form');
+    const errorDiv = document.getElementById('price-error');
+
+    form.addEventListener('submit', function (e) {
+      const purchase = parseFloat(purchaseInput.value);
+      const sale = parseFloat(saleInput.value);
+
+      if (!isNaN(purchase) && !isNaN(sale) && purchase > sale) {
+        e.preventDefault();
+        errorDiv.innerText = 'Purchase price cannot be greater than sale price.';
+      } else {
+        errorDiv.innerText = '';
+      }
+    });
+  });
+</script>
 {% endblock %}

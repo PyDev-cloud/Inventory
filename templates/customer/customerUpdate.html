@@ -1,55 +1,55 @@
-{% extends "../navbar.html" %} {% load static %}
- {% block content %}
+{% extends "../navbar.html" %}
+{% load static %}
+{% block content %}
+
 <div class="d-flex justify-content-center align-items-center vh-100">
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-md-6">
-        <h2 class="text-center mb-4">Update Customer</h2>
+        <div class="card shadow-lg p-4">
+          <h2 class="text-center mb-4 text-primary">Update Customer</h2>
 
-        <!-- Form starts here -->
-        <form method="post">
-          {% csrf_token %}
+          <!-- Form starts here -->
+          <form method="post">
+            {% csrf_token %}
 
-          <div class="mb-3">
-            <label for="{{ form.name.id_for_label }}" class="form-label"
-              >{{ form.name.label }}</label
-            >
-            {{ form.name }}
-            <!-- Renders the name field with applied Bootstrap classes -->
-          </div>
-           <div class="mb-3">
-            <label for="{{ form.Email.id_for_label }}" class="form-label"
-              >{{ form.Email.label }}</label
-            >
-            {{ form.Email }}
-            <!-- Renders the name field with applied Bootstrap classes -->
-          </div>
-           <div class="mb-3">
-            <label for="{{ form.Mobile.id_for_label }}" class="form-label"
-              >{{ form.Mobile.label }}</label
-            >
-            {{ form.Mobile }}
-            <!-- Renders the name field with applied Bootstrap classes -->
-          </div>
-           <div class="mb-3">
-            <label for="{{ form.Address.id_for_label }}" class="form-label"
-              >{{ form.Address.label }}</label
-            >
-            {{ form.Address }}
-            <!-- Renders the name field with applied Bootstrap classes -->
-          </div>
+            <!-- Name field -->
+            <div class="mb-3">
+              <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }}</label>
+              {{ form.name }}
+            </div>
 
-          <div class="mb-3">
-      <button type="submit" class="btn btn-primary">
-          {% if form.instance.pk %}Update{% else %}Create{% endif %}
-      </button>
-      <a href="{% url "categorylist" %}" class="btn btn-secondary">Cancel</a>
-  </div>
-        </form>
+            <!-- Email field -->
+            <div class="mb-3">
+              <label for="{{ form.Email.id_for_label }}" class="form-label">{{ form.Email.label }}</label>
+              {{ form.Email }}
+            </div>
+
+            <!-- Mobile field -->
+            <div class="mb-3">
+              <label for="{{ form.Mobile.id_for_label }}" class="form-label">{{ form.Mobile.label }}</label>
+              {{ form.Mobile }}
+            </div>
+
+            <!-- Address field -->
+            <div class="mb-3">
+              <label for="{{ form.Address.id_for_label }}" class="form-label">{{ form.Address.label }}</label>
+              {{ form.Address }}
+            </div>
+
+            <!-- Submit and Cancel buttons -->
+            <div class="mb-3">
+              <button type="submit" class="btn btn-primary btn-lg w-100">
+                {% if form.instance.pk %}Update{% else %}Create{% endif %}
+              </button>
+              <a href="{% url 'categorylist' %}" class="btn btn-secondary btn-lg w-100 mt-2">Cancel</a>
+            </div>
+
+          </form>
+        </div>
       </div>
     </div>
   </div>
 </div>
-
 
 {% endblock %}
