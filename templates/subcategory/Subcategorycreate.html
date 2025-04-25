@@ -1,32 +1,41 @@
-{% extends "../navbar.html" %} {% load static %} {% block content %}
-
+{% extends "../navbar.html" %}
+{% load static %}
+{% block content %}
 
 {% if messages %}
-    <ul>
-        {% for message in messages %}
-            <li>{{ message }}</li>
-        {% endfor %}
-    </ul>
+<div class="container mt-3">
+  {% for message in messages %}
+    <div class="alert alert-info">{{ message }}</div>
+  {% endfor %}
+</div>
 {% endif %}
-<div class="d-flex justify-content-center align-items-center vh-100">
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-md-5 mr-4">
-        <h2 class="text-center mb-4">Create New Subcategory</h2>
+
+<div class="container d-flex justify-content-center align-items-center min-vh-100">
+  <div class="row w-100 justify-content-center">
+    <!-- Form Card -->
+    <div class="col-md-5">
+      <div class="card shadow-lg p-4" style="border-radius: 20px;">
+        <h2 class="text-center text-primary mb-4">Create New Subcategory</h2>
         <form method="post">
-          {% csrf_token %} {{ subcategory_form.as_p }}
-          <!-- Render the form fields -->
+          {% csrf_token %}
+          {{ subcategory_form.as_p }}
           <button type="submit" class="btn btn-primary btn-lg w-100">
             Add Subcategory
           </button>
         </form>
       </div>
-      <div class="col-md-5 ml-5">
-        <h3 class="mb-4">Upload CSV or Excel File</h3>
-        <a href="#">Download Sample File</a>
+    </div>
+
+    <!-- Upload Card -->
+    <div class="col-md-5 mt-4 mt-md-0">
+      <div class="card shadow-lg p-4" style="border-radius: 20px;">
+        <h3 class="text-center text-success mb-3">Upload CSV or Excel File</h3>
+        <div class="text-center mb-2">
+          <a href="#" class="btn btn-outline-secondary btn-sm">Download Sample File</a>
+        </div>
         <form method="post" enctype="multipart/form-data">
-          {% csrf_token %} {{ file_form.as_p }}
-          <!-- Excel file upload form fields -->
+          {% csrf_token %}
+          {{ file_form.as_p }}
           <button type="submit" class="btn btn-success btn-lg w-100">
             Upload Excel
           </button>
@@ -35,4 +44,5 @@
     </div>
   </div>
 </div>
+
 {% endblock %}

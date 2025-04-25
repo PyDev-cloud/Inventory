@@ -9,13 +9,12 @@
           <th scope="col">SL</th>
           <th scope="col">Image</th>
           <th scope="col">Name</th>
-          <th scope="col">Quantity</th>
+          
           <th scope="col">P.Price</th>
           <th scope="col">S.Price</th>
           <th scope="col">Category</th>
           <th scope="col">Subcategory</th>
           <th scope="col">Unit</th>
-          <th scope="col">R.Quantity</th>
           <th scope="col">SKU</th>
           <th scope="col">Status</th>
           <th scope="col">Actions</th>
@@ -32,15 +31,16 @@
             No image available
         {% endif %}</td>
           <td>{{c.name}}</td>
-          <td>{{c.quantity}}</td>
+          
           <td>{{c.purchase_price}}</td>
           <td>{{c.sale_price}}</td>
           <td>{{c.category.name}}</td>
           <td>{{c.SubCategory.name}}</td>
           <td>{{c.unit_mesurement}} {{c.unit_type}}</td>
-          <td>{{c.reorder_quantity}}</td>
+          
           <td>{{c.sku}}</td>
-          <td>{{c.reorder_quantity}}</td>
+          <td>{{c.status}}</td>
+          
             <td>
                 
                 <a href="{% url "productupdate" c.pk%}" class="btn btn-info">Edit</a> 

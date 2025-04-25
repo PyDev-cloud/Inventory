@@ -4,7 +4,8 @@
 <!-- This sets the title of the page -->
 
 {% block content %}
-<h1>Hii</h1>
-{% for s in Sells %} {{s.quantity}} {% endfor %}
-<!-- This is the main content of the page -->
+{% if request.path == '/' %}
+  <h2 class="text-center mt-4">Welcome to Our Website!</h2>
+  <p class="text-center">We're glad to have you here. Explore and enjoy your visit!</p>
+{% endif %}
 {% endblock content %}

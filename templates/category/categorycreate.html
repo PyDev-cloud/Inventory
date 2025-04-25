@@ -1,31 +1,44 @@
-{% extends "../navbar.html" %} {% load static %} {% block content %} 
+{% extends "../navbar.html" %}
+{% load static %}
+{% block content %}
+
 {% if messages %}
-<ul>
+<div class="container mt-4">
   {% for message in messages %}
-  <li>{{ message }}</li>
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
   {% endfor %}
-</ul>
+</div>
 {% endif %}
-<div class="d-flex justify-content-center align-items-center vh-100">
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-md-5 mr-4">
-        <h2 class="text-center mb-4">Create New Category </h2>
+
+<div class="container d-flex justify-content-center align-items-center min-vh-100">
+  <div class="row w-100">
+    <!-- Add Category Card -->
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-lg p-4" style="border-radius: 20px;">
+        <h2 class="text-center text-primary mb-3">Create New Category</h2>
+        <hr>
         <form method="post">
-          {% csrf_token %} {{ category_form.as_p }}
-          <!-- Render the form fields -->
-          <button type="submit" class="btn btn-primary btn-lg w-100">
+          {% csrf_token %}
+          {{ category_form.as_p }}
+          <button type="submit" class="btn btn-primary btn-lg w-100 mt-3">
             Add Category
           </button>
         </form>
       </div>
-      <div class="col-md-5 ml-5">
-        <h3 class="mb-4">Upload CSV or Excel File</h3>
-        <a href="#">Download Sample File</a>
+    </div>
+
+    <!-- Upload Excel Card -->
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-lg p-4" style="border-radius: 20px;">
+        <h3 class="mb-3 text-success">Upload CSV or Excel File</h3>
+        <a href="#" class="text-decoration-underline mb-3 d-inline-block">Download Sample File</a>
         <form method="post" enctype="multipart/form-data">
-          {% csrf_token %} {{ file_form.as_p }}
-          <!-- Excel file upload form fields -->
-          <button type="submit" class="btn btn-success btn-lg w-100">
+          {% csrf_token %}
+          {{ file_form.as_p }}
+          <button type="submit" class="btn btn-success btn-lg w-100 mt-2">
             Upload Excel
           </button>
         </form>
@@ -33,4 +46,5 @@
     </div>
   </div>
 </div>
+
 {% endblock %}

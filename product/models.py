@@ -31,13 +31,14 @@ class Product(models.Model):
     SubCategory=models.ForeignKey(SubCategory,related_name="Subcategory",on_delete=models.CASCADE)
     unit_mesurement=models.FloatField()
     unit_type=models.CharField(max_length=50)
-    sku=models.CharField(max_length=50)
+    sku=models.CharField(max_length=50,blank=True,null=True)
     status=models.BooleanField(default=True)
     create_at=models.DateField(auto_now=True)
     update_at=models.DateField(auto_now=True)
     
     def __str__(self):
         return self.name
+    
     
 
 

@@ -340,15 +340,21 @@ class Productlist(LoginRequiredMixin,ListView):
             context["product"] = self.model.objects.all()
             return context
 
-class ProductCreateView(LoginRequiredMixin,CreateView):
+class ProductCreateView(LoginRequiredMixin, CreateView):
     model = Product
     form_class = ProductForm
-    template_name = 'product/productcreate.html'  # Your template to render the form
-    success_url = reverse_lazy('productlist')  # Redirect to the product list after creation
+    template_name = 'product/productcreate.html'
+    success_url = '/productList/'
 
     def form_valid(self, form):
-        # You can add extra logic here if needed before saving the form
+        # Custom validation or processing before saving the form
+        product = form.save(commit=False)  # Do not save yet
+        product.save()  # Now save
         return super().form_valid(form)
+
+    def form_invalid(self, form):
+        # Handle invalid form (optional logging or other processing)
+        return super().form_invalid(form)
 
 # Update a Product (for editing an existing product)
 class ProductUpdateView(LoginRequiredMixin, UpdateView):
@@ -1182,15 +1188,37 @@ class PurchaseListView(LoginRequiredMixin, ListView):
 
 
 
-
 class PurchaseItemListView(LoginRequiredMixin, ListView):
-    model = PurchaseItem
-    template_name = 'purchaseitems.html'  # Template for rendering the list
-    context_object_name = 'purchase_items'     # The context name for the list of items
-    
-    # Optionally you can filter by a specific purchase
+    model = Purchase  # We are now dealing with Purchase, not PurchaseItem
+    template_name = 'purchaselist.html'  # Template for rendering the list
+    context_object_name = 'purchases'  # Name of context variable
+
     def get_queryset(self):
-        purchase_id = self.kwargs.get('purchase_id')  # Assumes the purchase_id is passed in URL
-        if purchase_id:
-            return PurchaseItem.objects.filter(purchase_id=purchase_id)
-        return PurchaseItem.objects.all()
+        return Purchase.objects.prefetch_related('items').all()  # Prefetch related items for each purchase
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        purchases = context['purchases']
+        
+        # Calculate the total price, discount, paid amount, and due amount for each purchase
+        for purchase in purchases:
+            total_price = sum(item.quantity * item.unit_price for item in purchase.items.all())
+            discount = purchase.discount
+            paid_amount = purchase.paidAmount
+            due_amount = total_price - discount - paid_amount
+
+            # Add these to the context for each purchase
+            purchase.total_price = total_price
+            purchase.due_amount = due_amount
+            purchase.discount = discount
+            purchase.paid_amount = paid_amount
+            def get_context_data(self, **kwargs):
+                context = super().get_context_data(**kwargs)
+                print("Purchase items:", context['purchase_items']) 
+
+        return context
+
+
+    
+
+
