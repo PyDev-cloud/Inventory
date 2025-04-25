@@ -1090,7 +1090,7 @@ class DashboardView(LoginRequiredMixin,TemplateView):
     
 
 
-
+'''
 class PurchaseListView(LoginRequiredMixin, ListView):
     model = PurchaseItem
     template_name = 'purchase/purchaseList.html'  # Replace with your actual template
@@ -1173,7 +1173,7 @@ class PurchaseListView(LoginRequiredMixin, ListView):
         return response
     
 
-
+'''
 
 
 
@@ -1189,36 +1189,9 @@ class PurchaseListView(LoginRequiredMixin, ListView):
 
 
 class PurchaseItemListView(LoginRequiredMixin, ListView):
-    model = Purchase  # We are now dealing with Purchase, not PurchaseItem
-    template_name = 'purchaselist.html'  # Template for rendering the list
-    context_object_name = 'purchases'  # Name of context variable
+    model = Purchase
+    template_name = 'purchase/purchaseList.html'
+    context_object_name = 'purchases'
 
     def get_queryset(self):
-        return Purchase.objects.prefetch_related('items').all()  # Prefetch related items for each purchase
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        purchases = context['purchases']
-        
-        # Calculate the total price, discount, paid amount, and due amount for each purchase
-        for purchase in purchases:
-            total_price = sum(item.quantity * item.unit_price for item in purchase.items.all())
-            discount = purchase.discount
-            paid_amount = purchase.paidAmount
-            due_amount = total_price - discount - paid_amount
-
-            # Add these to the context for each purchase
-            purchase.total_price = total_price
-            purchase.due_amount = due_amount
-            purchase.discount = discount
-            purchase.paid_amount = paid_amount
-            def get_context_data(self, **kwargs):
-                context = super().get_context_data(**kwargs)
-                print("Purchase items:", context['purchase_items']) 
-
-        return context
-
-
-    
-
-
+        return Purchase.objects.prefetch_related('purchase_items__product').select_related('supplier')

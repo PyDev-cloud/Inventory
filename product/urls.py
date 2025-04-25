@@ -23,31 +23,31 @@ urlpatterns = [
     path('supplier/',SupplierCreate.as_view(),name='supplier'),
     path('supplierlist/',SupplierList.as_view(),name="SupplierList"),
 
+
+     path("purchaseList/",PurchaseItemListView.as_view(),name="purchaseList"),
+     path('create_purchase/', PurchaseCreateView.as_view(), name='create_purchase'),
+     path('purchase/invoice/<int:invoice_id>/', PurchaseInvoiceDetailView.as_view(), name='purchase_invoice_detail'),
+     path('purchase/receipt/<int:purchase_id>/', InvoiceView.as_view(), name="purchase_receipt"),  # Show a specific receipt
+
+
+
+
+
+
+
     path('customer/',CustomerCreate.as_view(),name='customer'),
     path('customerlist/',Customerlist.as_view(),name='customerlist'),
     path('customerUpdate/<int:pk>/edit/',CustomerUpdateView.as_view(),name="customerupdate"),
     
 
    
-    path('purchase/invoice/<int:invoice_id>/', PurchaseInvoiceDetailView.as_view(), name='purchase_invoice_detail'),
-    #path('purchase/create/', PurchaseCreate.as_view(), name='purchase_create'),
-    path('purchase/receipt/<int:purchase_id>/', InvoiceView.as_view(), name="purchase_receipt"),  # Show a specific receipt
-    path("purchaseList/",PurchaseListView.as_view(),name="purchaseList"),
-    #path('purchase/create/<int:product_id>/', PurchaseCreate.as_view(), name='Reorder'),
-    path("purchaseList/", PurchaseItemListView.as_view(), name="purchaseList"),
+    
+    
+   
 
-
-    path('create_purchase/', PurchaseCreateView.as_view(), name='create_purchase'),
+    
     path('create_selles/', SellesCreateView.as_view(), name='create_selles'),
     path('selles/invoice/<int:invoice_id>/', SellesInvoiceDetailView.as_view(), name='selles_invoice_detail'),
-
-
-    path('purchase-items/', PurchaseItemListView.as_view(), name='purchase_item_list'),  # List all PurchaseItems
-    path('purchase-items/<int:purchase_id>/', PurchaseItemListView.as_view(), name='purchase_item_list_by_purchase'),  # Filter by purchase_id
-
-
-
-
 
 
 
@@ -73,6 +73,6 @@ urlpatterns = [
 
     #path('upload/', FileUploadView.as_view(), name='file_upload'),
 
-    path('purchases/', PurchaseListView.as_view(), name='purchase_list'),
+    #path('purchases/', PurchaseListView.as_view(), name='purchase_list'),
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,44 +1,51 @@
+<!-- templates/purchaselist.html -->
 {% extends "../navbar.html" %}
 {% load static %}
 {% block content %}
 <h2>This is Product list Page</h2>
-  <a class="btn btn-primary" href="{% url "create_purchase" %}" role="button">Create  New Purchase</a>
+<a class="btn btn-primary" href="{% url "create_purchase" %}" role="button">Create New Purchase</a>
+
 <table class="table table-striped">
-    <thead>
-        <tr>
-          <th scope="col">SL</th>
-          <th scope="col">Product Name</th>
-          <th scope="col">Supplier Name</th>
-          <th scope="col">Quantity</th>
-          <th scope="col">Total Amount</th>
-          <th scope="col">Discount</th>
-          <th scope="col">Paid Amount</th>
-          <th scope="col">Due Amount</th>
-          <th scope="col">Date</th>
-          <th scope="col">Actions</th>
-       
-        </tr>
-      </thead>
-      <tbody>
-        {% for c in  purchases%}
-        <tr>
-          <th scope="row">{{ forloop.counter }}</th>
-          <td >{{c.product.name}}</td>
-          <td>{{c.purchase.supplier.name}}</td>
-          <td>{{c.quantity}}</td>
-          <td>{{c.purchase.alltotalAmount}}</td>
-          <td>{{c.purchase.discount}}</td>
-          <td>{{c.purchase.paidAmount}}</td>
-          <td>{{c.purchase.dueAmount}}</td>
-          <td>{{c.purchase.created_at}}</td>
-          
-            <td>
-                
-                <a href="{% url "productupdate" c.pk%}" class="btn btn-info">Edit</a> 
-                <a href="#" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this category?')">Delete</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-  </table>
-  {% endblock content %}
+  <thead>
+    <tr>
+      <th>SL</th>
+      <th>Products</th>
+      <th>Supplier</th>
+      <th>Total Product</th>
+      <th>Total Amount</th>
+      <th>Discount</th>
+      <th>Paid</th>
+      <th>Due</th>
+      <th>Date</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for purchase in purchases %}
+    <tr>
+      <td>{{ forloop.counter }}</td>
+      <td>
+        <ul>
+          {% for item in purchase.purchase_items.all %}
+            <li>{{ item.product.name }} = ({{ item.quantity }} Pcs)</li>
+          {% empty %}
+            <li>No items</li>
+          {% endfor %}
+        </ul>
+      </td>
+      <td>{{ purchase.supplier.name }}</td>
+      <td>{{ purchase.purchase_items.all|length }}</td>
+      <td>{{ purchase.alltotalAmount }}</td>
+      <td>{{ purchase.discount }}</td>
+      <td>{{ purchase.paidAmount }}</td>
+      <td>{{ purchase.dueAmount }}</td>
+      <td>{{ purchase.created_at|date:"d M, Y" }}</td>
+      <td>
+        <a href="{% url 'productupdate' purchase.pk %}" class="btn btn-info btn-sm">Edit</a>
+        <a href="#" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')">Delete</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock content %}
