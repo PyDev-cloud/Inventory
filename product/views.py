@@ -18,7 +18,7 @@ from datetime import date
 from django.db.models.functions import TruncMonth
 from django.db import transaction
 from django.contrib.auth.mixins import LoginRequiredMixin
-
+from django.http import HttpResponseNotFound
 
 from django.views.generic import *
 from .models import *
@@ -556,6 +556,64 @@ def get_product_purchase_price(request):
         return JsonResponse({'purchase_price': float(product.purchase_price)})
     except Product.DoesNotExist:
         return JsonResponse({'purchase_price': 0})
+
+
+
+class PurchaseUpdateView(UpdateView):
+    model = Purchase
+    form_class = PurchaseForm
+    template_name = 'purchase/update_purchase.html'
+    success_url = reverse_lazy('purchase_list')  # Update this to your actual success URL
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context['purchase_item_formset'] = PurchaseItemFormSet(self.request.POST, queryset=PurchaseItem.objects.filter(purchase=self.object))
+        else:
+            context['purchase_item_formset'] = PurchaseItemFormSet(queryset=PurchaseItem.objects.filter(purchase=self.object))
+        context['is_update'] = True
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        formset = context['purchase_item_formset']
+
+        if formset.is_valid():
+            purchase = form.save(commit=False)
+            total = 0
+
+            # Recalculate totals
+            for item_form in formset:
+                product = item_form.cleaned_data.get('product')
+                quantity = item_form.cleaned_data.get('quantity')
+                unit_price = item_form.cleaned_data.get('unit_price')
+                if product and quantity and unit_price:
+                    total += quantity * unit_price
+
+            discount = form.cleaned_data.get('discount') or 0
+            paid = form.cleaned_data.get('paidAmount') or 0
+            grand_total = total - discount
+            due = grand_total - paid
+
+            purchase.alltotalAmount = total
+            purchase.dueAmount = due
+            purchase.save()
+
+            # Save the formset
+            items = formset.save(commit=False)
+            for item in items:
+                item.purchase = purchase
+                item.product_totalAmount = item.unit_price * item.quantity
+                item.save()
+
+            # Optionally delete removed forms
+            for item in formset.deleted_objects:
+                item.delete()
+
+            return redirect(self.success_url)
+        else:
+            return self.render_to_response(self.get_context_data(form=form))
+    
 
 
 
@@ -1190,17 +1248,6 @@ class PurchaseListView(LoginRequiredMixin, ListView):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 class PurchaseItemListView(LoginRequiredMixin, ListView):
     model = Purchase
     template_name = 'purchase/purchaseList.html'
@@ -1208,3 +1255,35 @@ class PurchaseItemListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return Purchase.objects.prefetch_related('purchase_items__product').select_related('supplier')
+
+
+
+
+# views.py
+class SellesItemListView(LoginRequiredMixin, ListView):
+    model = Selles
+    template_name = 'sells/sellesList.html'  # Use correct path
+    context_object_name = 'sales'
+
+    def get_queryset(self):
+        return Selles.objects.prefetch_related('selles_items__product').select_related('customer')
+
+
+
+
+
+
+
+
+class Custom404View(TemplateView):
+    template_name = 'errors/404.html'
+
+    def render_to_response(self, context, **response_kwargs):
+        response_kwargs['status'] = 404
+        return super().render_to_response(context, **response_kwargs)
+
+
+
+
+
+

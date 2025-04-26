@@ -119,7 +119,11 @@ class PurchaseItem(models.Model):
             self.product_totalAmount = self.quantity * self.unit_price
         super().save(*args, **kwargs)
 
-    
+
+
+
+
+
 
 
 class PurchaseInvoice(models.Model):
@@ -197,6 +201,8 @@ class SellesItem(models.Model):
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     totalAmount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     profit = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
+    
     def __str__(self):
         item_names = ', '.join([str(item.product.name) for item in self.selles.selles_items.all()])
         return f'Sell of {item_names} to {self.selles.customer.name}'
