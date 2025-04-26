@@ -546,6 +546,19 @@ class PurchaseCreateView(LoginRequiredMixin,CreateView):
         else:
             context['purchase_item_formset'] = PurchaseItemFormSet(queryset=PurchaseItem.objects.none())  # Empty formset for new purchases
         return context
+    
+
+
+def get_product_purchase_price(request):
+    product_id = request.GET.get('product_id')
+    try:
+        product = Product.objects.get(id=product_id)
+        return JsonResponse({'purchase_price': float(product.purchase_price)})
+    except Product.DoesNotExist:
+        return JsonResponse({'purchase_price': 0})
+
+
+
 
 # Create a view to show the Purchase Invoice
 class PurchaseInvoiceDetailView(LoginRequiredMixin, CreateView):

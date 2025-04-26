@@ -27,7 +27,7 @@
       <td>
         <ul>
           {% for item in purchase.purchase_items.all %}
-            <li>{{ item.product.name }} = ({{ item.quantity }} Pcs)</li>
+            <li>{{ item.product.name }} = ({{ item.quantity }} {{item.quantity_type}})</li>
           {% empty %}
             <li>No items</li>
           {% endfor %}

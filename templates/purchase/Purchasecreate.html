@@ -23,7 +23,7 @@
         <div class="mb-4">
             {{ form.supplier }}
         </div>
-
+      
         <!-- Render the management form -->
         <h3>Purchase Items</h3>
         <!-- Render Purchase Item formset -->
@@ -43,6 +43,7 @@
                                 <td>
                                     {{ form.quantity }}
                                 </td>
+                                <td>{{ form.quantity_type }}</td>
                                 <td>
                                     <input type="text" name="product_totalAmount" class="form-control" readonly />
                                 </td>
@@ -91,9 +92,8 @@
 </div>
 
 <script type="text/javascript">
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function () {
 
-        // Function to calculate the total amount for each product row
         function calculateTotalAmount(row) {
             const unitPrice = row.querySelector('[name$="unit_price"]');
             const quantity = row.querySelector('[name$="quantity"]');
@@ -102,26 +102,18 @@
             if (unitPrice && quantity && totalAmountField) {
                 const unitPriceValue = parseFloat(unitPrice.value) || 0;
                 const quantityValue = parseInt(quantity.value) || 0;
-
-                // Calculate totalAmount
                 const totalAmount = unitPriceValue * quantityValue;
-
-                // Set the calculated totalAmount value
                 totalAmountField.value = totalAmount.toFixed(2);
             }
         }
 
-        // Update the grand total and other fields
         function updateGrandTotal() {
             let totalAmount = 0;
-
-            document.querySelectorAll('.form-row').forEach(function(row) {
+            document.querySelectorAll('.form-row').forEach(function (row) {
                 const totalAmountField = row.querySelector('[name$="product_totalAmount"]');
                 totalAmount += parseFloat(totalAmountField.value) || 0;
             });
-            
 
-            // Update the total amount and grand total fields
             document.getElementById('alltotalAmount').textContent = totalAmount.toFixed(2);
 
             const discountAmount = parseFloat(document.getElementById('discountAmount').value) || 0;
@@ -133,71 +125,83 @@
             document.getElementById('dueAmount').textContent = dueAmount.toFixed(2);
         }
 
-        // Add event listeners to product rows for calculating total amount dynamically
-        document.querySelectorAll('.form-row').forEach(function(row) {
+        function attachInputListeners(row) {
             const unitPriceField = row.querySelector('[name$="unit_price"]');
             const quantityField = row.querySelector('[name$="quantity"]');
 
             if (unitPriceField) {
-                unitPriceField.addEventListener('input', function() {
+                unitPriceField.addEventListener('input', function () {
                     calculateTotalAmount(row);
                     updateGrandTotal();
                 });
             }
 
             if (quantityField) {
-                quantityField.addEventListener('input', function() {
+                quantityField.addEventListener('input', function () {
                     calculateTotalAmount(row);
                     updateGrandTotal();
                 });
             }
+        }
 
-            calculateTotalAmount(row);  // Initial calculation
+        function attachProductChangeListener(productSelect) {
+            productSelect.addEventListener('change', function () {
+                const selectedProductId = this.value;
+                const row = this.closest('.form-row');
+                const unitPriceField = row.querySelector('[name$="unit_price"]');
+
+                if (selectedProductId) {
+                    fetch(`/get-purchase-price/?product_id=${selectedProductId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            unitPriceField.value = data.purchase_price.toFixed(2);
+                            calculateTotalAmount(row);
+                            updateGrandTotal();
+                        })
+                        .catch(error => {
+                            console.error('Error fetching purchase price:', error);
+                        });
+                } else {
+                    unitPriceField.value = '';
+                }
+            });
+        }
+
+        // Attach listeners to initial rows
+        document.querySelectorAll('.form-row').forEach(function (row) {
+            attachInputListeners(row);
+            const productSelect = row.querySelector('select[name$="product"]');
+            if (productSelect) {
+                attachProductChangeListener(productSelect);
+            }
+            calculateTotalAmount(row);
         });
 
-        // Listen to discount and paidAmount fields
         document.getElementById('discountAmount').addEventListener('input', updateGrandTotal);
         document.getElementById('paidAmount').addEventListener('input', updateGrandTotal);
 
-        // Add new product row functionality
-        document.getElementById('add-item-button').addEventListener('click', function() {
-            const formCount = document.querySelectorAll('.form-row').length;
+        // Add new row logic
+        document.getElementById('add-item-button').addEventListener('click', function () {
             const newRow = document.querySelector('.form-row').cloneNode(true);
-            
-            // Clear the new row values
             newRow.querySelectorAll('input').forEach(input => input.value = '');
 
-            // Update form count dynamically
             const managementForm = document.querySelector('#id_form-TOTAL_FORMS');
             managementForm.value = parseInt(managementForm.value) + 1;
 
-            const tbody = document.getElementById('product-rows');
-            tbody.appendChild(newRow);
+            document.getElementById('product-rows').appendChild(newRow);
 
-            // Attach event listeners to the new row
-            const unitPriceField = newRow.querySelector('[name$="unit_price"]');
-            const quantityField = newRow.querySelector('[name$="quantity"]');
+            attachInputListeners(newRow);
 
-            if (unitPriceField) {
-                unitPriceField.addEventListener('input', function() {
-                    calculateTotalAmount(newRow);
-                    updateGrandTotal();
-                });
+            const productSelect = newRow.querySelector('select[name$="product"]');
+            if (productSelect) {
+                attachProductChangeListener(productSelect);
             }
 
-            if (quantityField) {
-                quantityField.addEventListener('input', function() {
-                    calculateTotalAmount(newRow);
-                    updateGrandTotal();
-                });
-            }
-
-            calculateTotalAmount(newRow);  // Initial calculation for new row
-            updateGrandTotal();  // Update totals
+            calculateTotalAmount(newRow);
+            updateGrandTotal();
         });
 
-        // Initial total update
-        updateGrandTotal();
+        updateGrandTotal(); // Initial grand total calculation
     });
 </script>
 

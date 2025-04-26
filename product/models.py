@@ -23,6 +23,12 @@ class SubCategory(models.Model):
 
 
 class Product(models.Model):
+    Unite_TYPE_CHOICES = (
+        
+        ('KG', 'Kilogram'),
+        ('PCS', 'Pieces'),
+        
+    )
     name=models.CharField(max_length=100)
     purchase_price=models.DecimalField(max_digits=10, decimal_places=2)
     sale_price=models.DecimalField(max_digits=10, decimal_places=2)
@@ -30,7 +36,7 @@ class Product(models.Model):
     category=models.ForeignKey(Category,related_name="Category",on_delete=models.CASCADE)
     SubCategory=models.ForeignKey(SubCategory,related_name="Subcategory",on_delete=models.CASCADE)
     unit_mesurement=models.FloatField()
-    unit_type=models.CharField(max_length=50)
+    unit_type=models.CharField(max_length=10, choices=Unite_TYPE_CHOICES,null=False,blank=False)
     sku=models.CharField(max_length=50,blank=True,null=True)
     status=models.BooleanField(default=True)
     create_at=models.DateField(auto_now=True)
@@ -89,13 +95,21 @@ class Purchase(models.Model):
 
 
 class PurchaseItem(models.Model):
-    purchase = models.ForeignKey(Purchase, related_name='purchase_items', on_delete=models.CASCADE)  # Custom reverse relation
+    QUANTITY_TYPE_CHOICES = (
+        
+        ('KG', 'Kilogram'),
+        ('PCS', 'Pieces'),
+        
+    )
+
+    purchase = models.ForeignKey(Purchase, related_name='purchase_items', on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
+    quantity_type = models.CharField(max_length=10, choices=QUANTITY_TYPE_CHOICES,null=False,blank=False)  # <-- NEW FIELD
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     product_totalAmount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+
     def clean(self):
-        # Ensure product is set before saving
         if not self.product:
             raise ValidationError("Product is required for each purchase item.")
         super().clean()
