@@ -1,7 +1,10 @@
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
+
+
 from .views import *
+from product import views
 
 urlpatterns = [
     path('Dashboard/', DashboardView.as_view(), name='dashboard'),
@@ -28,6 +31,7 @@ urlpatterns = [
      path('create_purchase/', PurchaseCreateView.as_view(), name='create_purchase'),
      path('purchase/invoice/<int:invoice_id>/', PurchaseInvoiceDetailView.as_view(), name='purchase_invoice_detail'),
      path('purchase/receipt/<int:purchase_id>/', InvoiceView.as_view(), name="purchase_receipt"),  # Show a specific receipt
+     path('get-purchase-price/', views.get_product_purchase_price, name='get_purchase_price'),
 
 
 
