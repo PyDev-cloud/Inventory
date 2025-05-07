@@ -2,54 +2,95 @@
 {% load static %}
 
 {% block content %}
-<div class="container">
-    {% if form.errors %}
-    <div class="alert alert-danger">
-        <ul>
-            {% for field in form %}
-                {% for error in field.errors %}
-                    <li>{{field.name}}: {{ error }}</li>
-                {% endfor %}
-            {% endfor %}
-        </ul>
-    </div>
-    {% endif %}
 
+{# Unified error block for both form and formset errors #}
+{% if form.errors or selles_item_formset.errors %}
+<div class="alert alert-danger">
+    <ul class="mb-0">
+        {% for error in form.non_field_errors %}
+            <li><strong>Form error:</strong> {{ error }}</li>
+        {% endfor %}
+        {% for field in form %}
+            {% for error in field.errors %}
+                <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+            {% endfor %}
+        {% endfor %}
+        {% for error in selles_item_formset.non_form_errors %}
+            <li><strong>Item error:</strong> {{ error }}</li>
+        {% endfor %}
+        {% for item_form in selles_item_formset.forms %}
+            {% if item_form.errors %}
+                {% for field in item_form %}
+                    {% for error in field.errors %}
+                        <li><strong>{{ field.label }} (Row {{ forloop.parentloop.counter }}):</strong> {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+            {% endif %}
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<div class="container">
     <h2>Create a Purchase</h2>
     <form method="POST" id="purchase-form">
         {% csrf_token %}
 
-        <!-- Supplier Information -->
+        <!-- Customer -->
         <div class="mb-4">
             {{ form.customer }}
         </div>
 
-        <!-- Render the management form -->
         <h3>Selles Items</h3>
-        <!-- Render Purchase Item formset -->
         <div id="purchase-item-forms">
             <div class="row">
                 <div class="col-md-12">
                     <table class="table table-bordered table-striped">
-                        <thead id="product-rows">
-                            {{ selles_item_formset.management_form }} <!-- Ensure the management form is rendered correctly -->
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Unit Price</th>
+                                <th>Quantity</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="product-rows">
+                            {{ selles_item_formset.management_form }}
                             {% for form in selles_item_formset %}
-                            <!-- Render the individual forms -->
                             <tr class="form-row" style="display: table-row;">
-                                <td>{{ form.product }}</td>
+                                <td>
+                                    {{ form.product }}
+                                    {% if form.product.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.product.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </td>
                                 <td>
                                     {{ form.unit_price }}
+                                    {% if form.unit_price.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.unit_price.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
                                 </td>
                                 <td>
                                     {{ form.quantity }}
+                                    {% if form.quantity.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.quantity.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
                                 </td>
-                                <td>
-                                    <input type="text" name="product_totalAmount" class="form-control" readonly />
-                                </td>
+                                <td><input type="text" name="product_totalAmount" class="form-control" readonly /></td>
                             </tr>
                             {% endfor %}
-                        </thead>
-                        <tbody>
                         </tbody>
                         <tfoot>
                             <tr>
@@ -58,23 +99,23 @@
                             </tr>
                             <tr>
                                 <td colspan="3" class="text-right"><strong>Discount Amount:</strong></td>
-                <td class="text-right">
-                    <input type="number" id="discountAmount" name="discountAmount" class="form-control" value="0">
-                </td>
+                                <td class="text-right">
+                                    <input type="number" id="discountAmount" name="discountAmount" class="form-control" value="0">
+                                </td>
                             </tr>
                             <tr>
                                 <td colspan="3" class="text-right"><strong>Grand Total:</strong></td>
-                <td class="text-right" id="grandTotal">0.00</td>
+                                <td class="text-right" id="grandTotal">0.00</td>
                             </tr>
                             <tr>
                                 <td colspan="3" class="text-right"><strong>Paid Amount:</strong></td>
-                <td class="text-right">
-                    <input type="number" id="paidAmount" name="paidAmount" class="form-control" value="0">
-                </td>
+                                <td class="text-right">
+                                    <input type="number" id="paidAmount" name="paidAmount" class="form-control" value="0">
+                                </td>
                             </tr>
                             <tr>
                                 <td colspan="3" class="text-right"><strong>Due Amount:</strong></td>
-                <td class="text-right" id="dueAmount">0.00</td>
+                                <td class="text-right" id="dueAmount">0.00</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -82,121 +123,80 @@
             </div>
         </div>
 
-        <!-- Button to add another product -->
         <button type="button" id="add-item-button" class="btn btn-primary mt-3">Add product</button>
-
-        <!-- Submit the sale form -->
         <button type="submit" class="btn btn-success mt-3">Create</button>
     </form>
 </div>
 
 <script type="text/javascript">
     document.addEventListener("DOMContentLoaded", function() {
-
-        // Function to calculate the total amount for each product row
         function calculateTotalAmount(row) {
             const unitPrice = row.querySelector('[name$="unit_price"]');
             const quantity = row.querySelector('[name$="quantity"]');
             const totalAmountField = row.querySelector('[name$="product_totalAmount"]');
 
             if (unitPrice && quantity && totalAmountField) {
-                const unitPriceValue = parseFloat(unitPrice.value) || 0;
-                const quantityValue = parseInt(quantity.value) || 0;
-
-                // Calculate totalAmount
-                const totalAmount = unitPriceValue * quantityValue;
-
-                // Set the calculated totalAmount value
-                totalAmountField.value = totalAmount.toFixed(2);
+                const total = (parseFloat(unitPrice.value) || 0) * (parseInt(quantity.value) || 0);
+                totalAmountField.value = total.toFixed(2);
             }
         }
 
-        // Update the grand total and other fields
         function updateGrandTotal() {
             let totalAmount = 0;
-
-            document.querySelectorAll('.form-row').forEach(function(row) {
-                const totalAmountField = row.querySelector('[name$="product_totalAmount"]');
-                totalAmount += parseFloat(totalAmountField.value) || 0;
+            document.querySelectorAll('.form-row').forEach(row => {
+                const totalField = row.querySelector('[name$="product_totalAmount"]');
+                totalAmount += parseFloat(totalField.value) || 0;
             });
-            
 
-            // Update the total amount and grand total fields
             document.getElementById('alltotalAmount').textContent = totalAmount.toFixed(2);
 
-            const discountAmount = parseFloat(document.getElementById('discountAmount').value) || 0;
-            const grandTotal = totalAmount - discountAmount;
+            const discount = parseFloat(document.getElementById('discountAmount').value) || 0;
+            const grandTotal = totalAmount - discount;
             document.getElementById('grandTotal').textContent = grandTotal.toFixed(2);
 
-            const paidAmount = parseFloat(document.getElementById('paidAmount').value) || 0;
-            const dueAmount = grandTotal - paidAmount;
-            document.getElementById('dueAmount').textContent = dueAmount.toFixed(2);
+            const paid = parseFloat(document.getElementById('paidAmount').value) || 0;
+            const due = grandTotal - paid;
+            document.getElementById('dueAmount').textContent = due.toFixed(2);
         }
 
-        // Add event listeners to product rows for calculating total amount dynamically
-        document.querySelectorAll('.form-row').forEach(function(row) {
-            const unitPriceField = row.querySelector('[name$="unit_price"]');
-            const quantityField = row.querySelector('[name$="quantity"]');
+        function attachRowEvents(row) {
+            const unit = row.querySelector('[name$="unit_price"]');
+            const qty = row.querySelector('[name$="quantity"]');
 
-            if (unitPriceField) {
-                unitPriceField.addEventListener('input', function() {
-                    calculateTotalAmount(row);
-                    updateGrandTotal();
-                });
-            }
+            if (unit) unit.addEventListener('input', () => {
+                calculateTotalAmount(row);
+                updateGrandTotal();
+            });
 
-            if (quantityField) {
-                quantityField.addEventListener('input', function() {
-                    calculateTotalAmount(row);
-                    updateGrandTotal();
-                });
-            }
+            if (qty) qty.addEventListener('input', () => {
+                calculateTotalAmount(row);
+                updateGrandTotal();
+            });
 
-            calculateTotalAmount(row);  // Initial calculation
-        });
+            calculateTotalAmount(row);
+        }
 
-        // Listen to discount and paidAmount fields
+        document.querySelectorAll('.form-row').forEach(attachRowEvents);
+
         document.getElementById('discountAmount').addEventListener('input', updateGrandTotal);
         document.getElementById('paidAmount').addEventListener('input', updateGrandTotal);
 
-        // Add new product row functionality
         document.getElementById('add-item-button').addEventListener('click', function() {
             const formCount = document.querySelectorAll('.form-row').length;
             const newRow = document.querySelector('.form-row').cloneNode(true);
-            
-            // Clear the new row values
+
             newRow.querySelectorAll('input').forEach(input => input.value = '');
 
-            // Update form count dynamically
-            const managementForm = document.querySelector('#id_form-TOTAL_FORMS');
-            managementForm.value = parseInt(managementForm.value) + 1;
+            const totalForms = document.querySelector('#id_form-TOTAL_FORMS');
+            totalForms.value = parseInt(totalForms.value) + 1;
 
             const tbody = document.getElementById('product-rows');
             tbody.appendChild(newRow);
 
-            // Attach event listeners to the new row
-            const unitPriceField = newRow.querySelector('[name$="unit_price"]');
-            const quantityField = newRow.querySelector('[name$="quantity"]');
-
-            if (unitPriceField) {
-                unitPriceField.addEventListener('input', function() {
-                    calculateTotalAmount(newRow);
-                    updateGrandTotal();
-                });
-            }
-
-            if (quantityField) {
-                quantityField.addEventListener('input', function() {
-                    calculateTotalAmount(newRow);
-                    updateGrandTotal();
-                });
-            }
-
-            calculateTotalAmount(newRow);  // Initial calculation for new row
-            updateGrandTotal();  // Update totals
+            attachRowEvents(newRow);
+            updateGrandTotal();
         });
 
-        // Initial total update
         updateGrandTotal();
     });
 </script>

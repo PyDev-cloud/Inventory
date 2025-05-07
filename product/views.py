@@ -1,3 +1,4 @@
+from collections import defaultdict
 from django.contrib import messages
 from datetime import datetime
 from django.db.models import Q
@@ -25,6 +26,37 @@ from .models import *
 from .forms import *
 
 #category Creater View 
+class categoryViewlist(LoginRequiredMixin,ListView):
+    model = Category
+    template_name = "category/categoryList.html"
+    paginate_by = 7
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # If you want to use 'category_list' as a custom context variable, that's fine
+        context['Category'] = Category.objects.all()  # Rename 'object_list' to 'category_list'
+        return context
+        
+#Category Update View 
+class CategoryUpdateView(LoginRequiredMixin,UpdateView):
+    model = Category
+    form_class = CategoryForm  # The form used for editing
+    template_name = 'category/categoryUpdate.html'  # The template to render the form
+    context_object_name = 'category'  # The context variable used in the template
+
+    # Redirect to the category list view upon successful update
+    success_url = reverse_lazy('categorylist')
+
+    def get_object(self, queryset=None):
+       queryset = Category.objects.filter(pk=self.kwargs['pk'])
+       try:
+            obj=queryset.get()
+       except Category.DoesNotExist:
+            raise Http404("category not found or inactive")
+       return obj
+
+
+
 class CategoryAndFileUploadView(LoginRequiredMixin,FormView):
     model = Category
     form_class = CategoryForm
@@ -112,55 +144,7 @@ class CategoryAndFileUploadView(LoginRequiredMixin,FormView):
         print(f"Finished processing {len(df)} rows.")
     
 
-
-
-    
-
-                      
-
-
-
-
-class categoryViewlist(LoginRequiredMixin,ListView):
-    model = Category
-    template_name = "category/categoryList.html"
-    paginate_by = 7
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # If you want to use 'category_list' as a custom context variable, that's fine
-        context['Category'] = Category.objects.all()  # Rename 'object_list' to 'category_list'
-        return context
         
-#Category Update View 
-class CategoryUpdateView(LoginRequiredMixin,UpdateView):
-    model = Category
-    form_class = CategoryForm  # The form used for editing
-    template_name = 'category/categoryUpdate.html'  # The template to render the form
-    context_object_name = 'category'  # The context variable used in the template
-
-    # Redirect to the category list view upon successful update
-    success_url = reverse_lazy('categorylist')
-
-    def get_object(self, queryset=None):
-       queryset = Category.objects.filter(pk=self.kwargs['pk'])
-       try:
-            obj=queryset.get()
-       except Category.DoesNotExist:
-            raise Http404("category not found or inactive")
-       return obj
-       
-
-
-
-
-
-
-
-
-
-
-              
 
 #SubCategory View
 class SubcategoryViewlist(LoginRequiredMixin,ListView):
@@ -306,11 +290,6 @@ class SubCategoryAndFileUploadView(LoginRequiredMixin,FormView):
 
 
 
-
-
-    
-
-   
 #SubCategory Update View
 class SubCategoryUpdateView(LoginRequiredMixin,UpdateView):
     model = SubCategory
@@ -330,15 +309,6 @@ class SubCategoryUpdateView(LoginRequiredMixin,UpdateView):
        return obj
     
 
-#product List View 
-class Productlist(LoginRequiredMixin,ListView):
-        model=Product
-        template_name="product/productList.html"
-        
-        def get_context_data(self, **kwargs):
-            context = super().get_context_data(**kwargs)
-            context["product"] = self.model.objects.all()
-            return context
 
 class ProductCreateView(LoginRequiredMixin, CreateView):
     model = Product
@@ -355,6 +325,17 @@ class ProductCreateView(LoginRequiredMixin, CreateView):
     def form_invalid(self, form):
         # Handle invalid form (optional logging or other processing)
         return super().form_invalid(form)
+    
+#product List View 
+class Productlist(LoginRequiredMixin,ListView):
+        model=Product
+        template_name="product/productList.html"
+        
+        def get_context_data(self, **kwargs):
+            context = super().get_context_data(**kwargs)
+            context["product"] = self.model.objects.all()
+            return context
+
 
 # Update a Product (for editing an existing product)
 class ProductUpdateView(LoginRequiredMixin, UpdateView):
@@ -386,14 +367,7 @@ class ProductUpdateView(LoginRequiredMixin,UpdateView):
        return obj
 
 
-class SupplierList(LoginRequiredMixin,ListView):
-        model=Supplier
-        template_name="supplier/supplierList.html"
-        
-        def get_context_data(self, **kwargs):
-            context = super().get_context_data(**kwargs)
-            context["supplier"] = self.model.objects.all()
-            return context
+
 
 
 class SupplierCreate(LoginRequiredMixin,CreateView):
@@ -411,6 +385,14 @@ class SupplierCreate(LoginRequiredMixin,CreateView):
         messages.error(self.request, "Please correct the errors below.")  # Error message
         return super().form_invalid(form)
     
+class SupplierList(LoginRequiredMixin,ListView):
+        model=Supplier
+        template_name="supplier/supplierList.html"
+        
+        def get_context_data(self, **kwargs):
+            context = super().get_context_data(**kwargs)
+            context["supplier"] = self.model.objects.all()
+            return context
 
 #Customer List View
 class Customerlist(LoginRequiredMixin,ListView):
@@ -457,25 +439,6 @@ class CustomerUpdateView(LoginRequiredMixin,UpdateView):
 
 
 
-
-class InvoiceView(LoginRequiredMixin,TemplateView):
-    template_name = 'Receipt/purchaseRecipt.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        purchase_id = self.kwargs.get('purchase_id')
-        if purchase_id:
-            # Attempt to get the invoice for the purchase
-            purchase_invoice = PurchaseInvoice.objects.filter(purchase__id=purchase_id).first()
-            
-            if purchase_invoice:
-                context['purchase_invoice'] = purchase_invoice
-            else:
-                context['purchase_invoice'] = None  # Handle the case when no invoice exists for this purchase
-
-        return context
-    
 
 class PurchaseCreateView(LoginRequiredMixin,CreateView):
     model = Purchase
@@ -547,6 +510,7 @@ class PurchaseCreateView(LoginRequiredMixin,CreateView):
             context['purchase_item_formset'] = PurchaseItemFormSet(queryset=PurchaseItem.objects.none())  # Empty formset for new purchases
         return context
     
+
 
 
 def get_product_purchase_price(request):
@@ -637,15 +601,6 @@ class PurchaseInvoiceDetailView(LoginRequiredMixin, CreateView):
 
 
 
-class SellesListView(LoginRequiredMixin, ListView):
-    model = Selles
-    template_name = 'Sells/SellesList.html'  # Template to render the list
-    context_object_name = 'sales'  # Context variable name for the list
-
-    # You can add pagination if needed
-    paginate_by = 10  # Adjust the number of items per page if required
-    
-
 
 
 class SellesInvoiceDetailView(LoginRequiredMixin, CreateView):
@@ -664,73 +619,93 @@ class SellesInvoiceDetailView(LoginRequiredMixin, CreateView):
 
 
 
-class SellesCreateView(LoginRequiredMixin,CreateView):
+class SellesCreateView(LoginRequiredMixin, CreateView):
     model = Selles
     form_class = SellesForm
     template_name = 'Sells/SellsCreate.html'
-    success_url = reverse_lazy('')
+    success_url = reverse_lazy('')  # You should define the actual success URL
+    
     def form_valid(self, form):
-    # Start a database transaction to ensure atomicity
+        # Initialize formset with submitted POST data
+        selles_item_formset = sellesItemForm(self.request.POST, queryset=SellesItem.objects.none())
+
+        if not selles_item_formset.is_valid():
+            return self.render_to_response(self.get_context_data(form=form, selles_item_formset=selles_item_formset))
+
+        form_items = []
+        product_quantities = defaultdict(int)
+        stock_errors = False
+
+        # Step 1: Collect valid items and aggregate quantity per product
+        for item_form in selles_item_formset:
+            if not item_form.cleaned_data:
+                continue  # Skip empty or deleted forms
+
+            product = item_form.cleaned_data.get('product')
+            quantity = item_form.cleaned_data.get('quantity')
+
+            if not product or quantity in [None, 0]:
+                continue  # Skip invalid entries
+
+            form_items.append(item_form)
+            product_quantities[product] += quantity
+
+        if not product_quantities:
+            form.add_error(None, "At least one valid item with sufficient stock is required.")
+            return self.render_to_response(self.get_context_data(form=form, selles_item_formset=selles_item_formset))
+
+        # Step 2: Validate stock for each unique product
+        stock_map = {}
+
+        for product, total_quantity in product_quantities.items():
+            try:
+                stock = Stock.objects.get(product=product)
+                stock_map[product] = stock
+            except Stock.DoesNotExist:
+                for f in form_items:
+                    if f.cleaned_data.get('product') == product:
+                        f.add_error('product', f"No stock record found for {product}")
+                stock_errors = True
+                continue
+
+            if stock.quantity < total_quantity:
+                for f in form_items:
+                    if f.cleaned_data.get('product') == product:
+                        f.add_error('quantity', f"Insufficient stock for {product.name}. Available: {stock.quantity}")
+                stock_errors = True
+
+        if stock_errors:
+            return self.render_to_response(self.get_context_data(form=form, selles_item_formset=selles_item_formset))
+
+        # Step 3: Save everything in a transaction
         with transaction.atomic():
             self.object = form.save()
-        #print("POST data:", self.request.POST)
 
-        
+            for item_form in form_items:
+                product = item_form.cleaned_data['product']
+                quantity = item_form.cleaned_data['quantity']
 
-        # Initialize the formset with the POST data and queryset
-        selles_item_formset = sellesItemForm(self.request.POST, queryset=SellesItem.objects.filter(selles=self.object))
+                # Save item and link to the Selles instance
+                item = item_form.save(commit=False)
+                item.selles = self.object
+                item.save()
 
-        if selles_item_formset.is_valid():
-            for idx, selles_item_form in enumerate(selles_item_formset):
-                # Skip empty forms
-                if not selles_item_form.cleaned_data.get('product'):
-                    print(f"Form {idx} is missing product.")  # Debugging line
-                    continue  # Skip saving this item if no product is selected
-                
-                # Get the product and quantity from the form
-                product = selles_item_form.cleaned_data.get('product')
-                quantity = selles_item_form.cleaned_data.get('quantity')
-
-                # Check if the stock exists for this product
-                try:
-                    stock = Stock.objects.get(product=product)
-                except Stock.DoesNotExist:
-                    print(f"Stock not found for product {product.name}.")
-                    continue  # Skip this item if stock does not exist for the product
-                if stock.quantity<quantity:
-                    print('quantity', f"Insufficient stock for {product.name}. Available: {stock.quantity}.")
-                    selles_item_form.add_error('quantity', f"Insufficient stock for {product.name}. Available: {stock.quantity}.")
-                    return self.render_to_response(self.get_context_data(form=form, selles_item_formset=selles_item_formset))
-
-                # Now you can calculate the new stock level
-                new_stock_quantity = stock.quantity - quantity  # Subtract the purchased quantity from the stock
-
-                # Check if there is enough stock
-                if new_stock_quantity < 0:
-                    print('quantity', f"Insufficient stock for {product.name}. Available: {stock.quantity}.")
-                    messages.error('quantity', f"Insufficient stock for {product.name}. Available: {stock.quantity}.")
-                    return self.render_to_response(self.get_context_data(form=form, selles_item_formset=selles_item_formset))
-
-                
-                # Update the stock if everything is valid
-                stock.quantity = new_stock_quantity
+                # Reduce stock
+                stock = stock_map[product]
+                stock.quantity -= quantity
                 stock.save()
 
+            # Step 4: Update totals
+            total_amount = sum(item.totalAmount for item in self.object.selles_items.all())
+            paid_amount = self.object.paidAmount or Decimal('0.00')
+            discount_amount = self.object.discountAmount or Decimal('0.00')
 
-                
-            # If all forms are valid (no errors), proceed to save the SellesItem instances
-                for form in selles_item_formset:
-                    form.instance.selles = self.object
-                selles_item_formset.save()
-
-            # Calculate total and due amounts
-            total_amount = sum([item.totalAmount for item in self.object.selles_items.all()])
-            paid_amount = self.object.paidAmount if self.object.paidAmount else Decimal('0.00')
-            self.object.totalPrice = total_amount  # Save totalPrice
-            self.object.dueAmount = total_amount - paid_amount  # Calculate dueAmount
+            self.object.totalPrice = total_amount
+            self.object.grand_total = total_amount - discount_amount
+            self.object.dueAmount = self.object.grand_total - paid_amount
             self.object.save()
 
-            # Create an invoice if one doesn't exist
+            # Step 5: Create invoice if not exists
             if not self.object.invoice:
                 invoice = SellesInvoice.objects.create(
                     invoice_number=str(uuid.uuid4()),
@@ -742,23 +717,25 @@ class SellesCreateView(LoginRequiredMixin,CreateView):
                 self.object.invoice = invoice
                 self.object.save()
 
-            # Redirect to the invoice detail page
-            return redirect('selles_invoice_detail', invoice_id=self.object.invoice.id)
-
-        print("POST data:", self.request.POST)  # Debug: Check the raw POST data
-
-        # If the form is invalid or any other issue, render the form again with errors
-        return self.render_to_response(self.get_context_data(form=form, selles_item_formset=selles_item_formset))
-
+        return redirect('selles_invoice_detail', invoice_id=self.object.invoice.id)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
-        if self.object:
+        if hasattr(self, 'object') and self.object:
             context['selles_item_formset'] = sellesItemForm(queryset=self.object.selles_items.all())
         else:
-            context['selles_item_formset'] = sellesItemForm(queryset=SellesItem.objects.none())  # Empty formset for new purchases
+            context['selles_item_formset'] = sellesItemForm(queryset=SellesItem.objects.none())
         return context
+
+
+class SellesListView(LoginRequiredMixin, ListView):
+    model = Selles
+    template_name = 'Sells/SellesList.html'  # Template to render the list
+    context_object_name = 'sales'  # Context variable name for the list
+
+    # You can add pagination if needed
+    paginate_by = 10  # Adjust the number of items per page if required
+    
 
         
     
@@ -1161,91 +1138,6 @@ class DashboardView(LoginRequiredMixin,TemplateView):
     
 
 
-'''
-class PurchaseListView(LoginRequiredMixin, ListView):
-    model = PurchaseItem
-    template_name = 'purchase/purchaseList.html'  # Replace with your actual template
-    context_object_name = 'purchases'
-
-    def get_queryset(self):
-        # Get filter parameters from the GET request
-        due_amount_filter = self.request.GET.get('dueAmount', None)
-        date_from_filter = self.request.GET.get('date_from', None)
-        date_to_filter = self.request.GET.get('date_to', None)
-
-        # Start with all Purchase objects
-        queryset = PurchaseItem.objects.all()
-
-        # Apply filtering based on due amount
-        if due_amount_filter:
-            try:
-                # Ensure due_amount_filter is a number (float or Decimal)
-                due_amount_filter = Decimal(due_amount_filter)
-                queryset = queryset.filter(dueAmount__gte=due_amount_filter)
-            except ValueError:
-                # If the value can't be converted to a Decimal, skip the filter
-                pass
-
-        # Apply filtering based on date range (create_at is assumed to be a DateTimeField)
-        if date_from_filter:
-            try:
-                parsed_date_from = datetime.strptime(date_from_filter, '%Y-%m-%d').date()
-                queryset = queryset.filter(create_at__gte=parsed_date_from)
-            except ValueError:
-                pass
-
-        if date_to_filter:
-            try:
-                parsed_date_to = datetime.strptime(date_to_filter, '%Y-%m-%d').date()
-                queryset = queryset.filter(create_at__lte=parsed_date_to)
-            except ValueError:
-                pass
-
-        return queryset
-
-    def get(self, request, *args, **kwargs):
-        # Check if user wants to download the data
-        if 'csv' in request.GET:
-            return self.export_to_csv()
-        elif 'excel' in request.GET:
-            return self.export_to_excel()
-        
-        return super().get(request, *args, **kwargs)
-
-    def export_to_csv(self):
-        queryset = self.get_queryset()
-
-        # Create a pandas DataFrame from the queryset
-        df = pd.DataFrame(list(queryset.values('id', 'dueAmount', 'create_at')))
-
-        # Create the HTTP response with the appropriate content type
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="purchases.csv"'
-
-        # Write the DataFrame to the response in CSV format
-        df.to_csv(path_or_buffer=response, index=False, header=True)
-        
-        return response
-
-    def export_to_excel(self):
-        queryset = self.get_queryset()
-
-        # Create a pandas DataFrame from the queryset
-        df = pd.DataFrame(list(queryset.values('id', 'dueAmount',  'create_at')))
-
-        # Create the HTTP response with the appropriate content type
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = 'attachment; filename="purchases.xlsx"'
-
-        # Write the DataFrame to the response in Excel format
-        with pd.ExcelWriter(response, engine='openpyxl') as writer:
-            df.to_excel(writer, index=False, sheet_name='Purchases')
-
-        return response
-    
-
-'''
-
 
 
 class PurchaseItemListView(LoginRequiredMixin, ListView):
@@ -1287,3 +1179,22 @@ class Custom404View(TemplateView):
 
 
 
+
+class InvoiceView(LoginRequiredMixin,TemplateView):
+    template_name = 'Receipt/purchaseRecipt.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        purchase_id = self.kwargs.get('purchase_id')
+        if purchase_id:
+            # Attempt to get the invoice for the purchase
+            purchase_invoice = PurchaseInvoice.objects.filter(purchase__id=purchase_id).first()
+            
+            if purchase_invoice:
+                context['purchase_invoice'] = purchase_invoice
+            else:
+                context['purchase_invoice'] = None  # Handle the case when no invoice exists for this purchase
+
+        return context
+    
