@@ -1,7 +1,7 @@
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
-
+from .views import Custom404View 
 
 from .views import *
 from product import views
@@ -32,6 +32,7 @@ urlpatterns = [
      path('purchase/invoice/<int:invoice_id>/', PurchaseInvoiceDetailView.as_view(), name='purchase_invoice_detail'),
      path('purchase/receipt/<int:purchase_id>/', InvoiceView.as_view(), name="purchase_receipt"),  # Show a specific receipt
      path('get-purchase-price/', views.get_product_purchase_price, name='get_purchase_price'),
+     path('purchase/<int:pk>/edit/', PurchaseUpdateView.as_view(), name='update_purchase'),
 
 
 
@@ -59,7 +60,7 @@ urlpatterns = [
 
 
 
-    path('selles/', SellesListView.as_view(), name='selles_list'),
+    path('selles/', SellesItemListView.as_view(), name='selles_list'),
 
 
 
@@ -79,4 +80,11 @@ urlpatterns = [
 
     #path('purchases/', PurchaseListView.as_view(), name='purchase_list'),
 
+
+
+
+
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+
+handler404 = 'product.views.Custom404View'

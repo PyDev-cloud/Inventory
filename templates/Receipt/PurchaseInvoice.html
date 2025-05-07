@@ -1,64 +1,169 @@
-{% extends '../navbar.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice - A4 Printable</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        @media print {
+            body, html {
+                margin: 0;
+                padding: 0;
+                width: 210mm;
+                height: 297mm;
+                font-size: 12px;
+            }
 
-{% block content %}
-<div class="container">
-  <div class="row">
-    <div class="col-md-12 text-center">
-      <h2>Purchase Invoice</h2>
+            .invoice-box {
+                page-break-after: always;
+                margin: 10mm;
+                padding: 10mm;
+                border: none !important;
+                box-shadow: none !important;
+            }
+
+            .no-print {
+                display: none;
+            }
+
+            table th, table td {
+                border: 1px solid #000 !important;
+            }
+        }
+
+        body {
+            padding: 20px;
+            font-size: 12px;
+        }
+
+        .invoice-box {
+            border: 1px solid #000;
+            padding: 10px;
+            max-width: 800px;
+            margin: auto;
+        }
+
+        .logo {
+            width: 100px;
+        }
+
+        table th, table td {
+            border: 1px solid #000 !important;
+            vertical-align: middle;
+        }
+
+        h3, h5 {
+            margin-top: 0;
+        }
+
+        td p {
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+<div class="invoice-box">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Purchase Invoice</h3>
+        <img src="https://i.ibb.co/xCcJSyf/duibd.png" class="logo" alt="duibd logo">
     </div>
-  </div>
-  <div class="row">
-    <div class="col-md-6">
-      <p><strong>Invoice No:</strong> {{ invoice.invoice_number }}</p>
-      <p><strong>Invoice Date:</strong> {{ invoice.created_at|date:"F d, Y" }}</p>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <p><strong>Invoice Date:</strong> {{ invoice.created_at|date:"F d, Y" }}</p>
+            <p><strong>Invoice No:</strong> {{ invoice.invoice_number }}</p>
+        </div>
     </div>
-    <div class="col-md-6">
-      <p><strong>Supplier:</strong> {{ invoice.purchase.supplier.name }}</p>
-      <p><strong>Address:</strong> {{ invoice.purchase.supplier.Address }}</p>
-      {% if invoice.purchase.supplier.mobile %}
-      <p><strong>Phone:</strong> {{ invoice.purchase.supplier.mobile }}</p>
-      {% endif %}
-    </div>
-  </div>
-  <div class="row">
-    <div class="col-md-12">
-      <table class="table table-bordered">
+
+    <h5>Bill To</h5>
+    <table class="table table-bordered">
+        <tr><td>
+            <p><strong>Consumer Name:</strong> {{ invoice.purchase.supplier.name }}</p>
+            <p><strong>Company Name:</strong> {{ invoice.purchase.supplier.company_name }}</p>
+            <p><strong>Street Address:</strong> {{ invoice.purchase.supplier.Address }}</p>
+            <p><strong>City State Zip:</strong> {{ invoice.purchase.supplier.city_state_zip }}</p>
+            <p><strong>Phone:</strong> {{ invoice.purchase.supplier.mobile }}</p>
+            <p><strong>Email Address:</strong> {{ invoice.purchase.supplier.email }}</p>
+        </td></tr>
+    </table>
+
+    <table class="table table-bordered text-center">
         <thead>
-          <tr>
-            <th>Product Name</th>
+        <tr>
+            <th>SL No</th>
+            <th>Product Description</th>
             <th>Price</th>
-            <th>Quantity</th>
-            <th>Subtotal</th>
-          </tr>
+            <th>Weight (kg)</th>
+            <th>Amount</th>
+        </tr>
         </thead>
         <tbody>
           {% for purchase_item in invoice.purchase.purchase_items.all %}
-          <tr>
+        <tr>
+            <td>{{ forloop.counter }}</td>
             <td>{{ purchase_item.product.name }}</td>
             <td>{{ purchase_item.unit_price }}</td>
             <td>{{ purchase_item.quantity }}</td>
-            <td>{{ purchase_item.totalAmount }}</td>
-          </tr>
-          {% endfor %}
+            <td></td>
+        </tr>
+        {% endfor %}
+        <tr><td>{{ purchase|length|add:1 }}</td><td>Delivery Charge</td><td colspan="2"></td><td>80.00 /-</td></tr>
+        <tr>
+            <td colspan="2">TAX</td>
+            <td>0%</td>
+            <td>Total Amount</td>
+            <td>{{ invoice.total_amount }}/-</td>
+        </tr>
+        <tr>
+            <td colspan="4">Discount</td>
+            <td>{{ invoice.discount }}/-</td>
+        </tr>
+        <tr>
+            <td colspan="4">grand Total</td>
+            <td>{{ invoice.grandtotal }}</td>
+        </tr>
+        <tr>
+          <td colspan="4">Paid Amount</td>
+          <td>{{ invoice.paidAmount }}</td>
+      </tr>
+      <tr>
+        <td colspan="4">Due Amount</td>
+        <td>{{ invoice.dueAmount }}</td>
+    </tr>
         </tbody>
-        <tfoot>
-          <tr>
-            <td colspan="3">Total</td>
-            <td>{{ invoice.purchase.totalAmount }}</td>
-          </tr>
-          {% if invoice.discount > 0 %}
-          <tr>
-            <td colspan="3">Discount</td>
-            <td>{{ invoice.discount }}</td>
-          </tr>
-          <tr>
-            <td colspan="3"><strong>Grand Total</strong></td>
-            <td>{{ invoice.GrandTotal }}</td>
-          </tr>
-          {% endif %}
-        </tfoot>
-      </table>
+    </table>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <strong>Received By:</strong> {{ invoice.received_by }}<br>
+            <strong>Note:</strong> {{ invoice.note }}
+        </div>
+        
     </div>
-  </div>
+
+    <div class="mt-4">
+        <p>If you have any query about this invoice please contact us at 
+            <a href="mailto:support@duibd.com">support@duibd.com</a> | +880-19747-054</p>
+        <p class="text-end">Signature and Seal</p>
+    </div>
 </div>
-{% endblock %}
+
+
+
+<script>
+window.onload = function () {
+    const invoiceElement = document.querySelector('.invoice-box');
+    const opt = {
+        margin:       0.5,
+        filename:     'invoice.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(invoiceElement).save();
+};
+</script>
+</body>
+</html>

@@ -1,79 +1,57 @@
-{% extends "navbar.html" %} 
-
-
+<!-- templates/purchase/sell_list.html -->
+{% extends "../navbar.html" %}
 {% load static %}
 {% block content %}
-{% if messages %}
-    <ul>
-        {% for message in messages %}
-            <li>{{ message }}</li>
-        {% endfor %}
-    </ul>
-{% endif %}
-<div class=" ">
-  <h2>List of Sells</h2>
-  <a class="btn btn-primary" href="{% url "create_selles" %}" role="button">Create New Sells </a>
-<div class="d-flex justify-content-center align-items-center w-100 vh-100">
-  
-<table class="table table-striped w-100">
+
+<h2>This is Sell List Page</h2>
+<a class="btn btn-primary mb-3" href="{% url "create_selles" %}" role="button">Create New Sell</a>
+
+<table class="table table-striped">
   <thead>
     <tr>
-      <th>Product</th>
+      <th>SL</th>
+      <th>Products</th>
       <th>Customer</th>
-      <th>Total Price</th>
-      <th>Paid Amount</th>
-      <th>Due Amount</th>
-      <th>Profit</th>
-      <th>Invoice</th>
+      <th>Total Products</th>
+      <th>Total Amount</th>
+      <th>Paid</th>
+      <th>Discount</th>
+      <th>Due</th>
+      <th>Date</th>
       <th>Actions</th>
     </tr>
   </thead>
   <tbody>
     {% for sale in sales %}
     <tr>
-      <td>{{ sale.product.name }}</td>
+      <td>{{ forloop.counter }}</td>
+      <td>
+        <ul>
+          {% for item in sale.selles_items.all %}
+            <li>{{ item.product.name }} = ({{ item.quantity }})</li>
+          {% empty %}
+            <li>No items</li>
+          {% endfor %}
+        </ul>
+      </td>
       <td>{{ sale.customer.name }}</td>
+      <td>{{ sale.selles_items.count }}</td>
       <td>{{ sale.totalPrice }}</td>
       <td>{{ sale.paidAmount }}</td>
+      <td>{{sale.discountAmount }}</td>
       <td>{{ sale.dueAmount }}</td>
-      <td>{{ sale.profit }}</td>
+      <td>{{ sale.created_at|date:"d M, Y" }}</td>
       <td>
-        <a href="{% url 'purchase_invoice_detail' sale.invoice.id %}"
-          >View Invoice</a
-        > 
-      </td>
-      <td>
-       <a href="#">Edit</a> |
-        <a href="#">Delete</a> 
+        <a href="#" class="btn btn-sm btn-warning">Edit</a>
+        <a href="#" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</a> 
       </td>
     </tr>
     {% empty %}
     <tr>
-      <td colspan="8">No sales records found.</td>
+      <td colspan="9">No sells found.</td>
     </tr>
     {% endfor %}
   </tbody>
-  </table>
-</div>
-</div>
-<!-- Pagination controls -->
-<div class="pagination">
-  {% if sales.has_previous %}
-  <a href="?page=1">&laquo; First</a>
-  <a href="?page={{ sales.previous_page_number }}">Previous</a>
-  {% endif %}
-  <span>Page {{ sales.number }} of {{ sales.paginator.num_pages }}</span>
-  {% if sales.has_next %}
-  <a href="?page={{ sales.next_page_number }}">Next</a>
-  <a href="?page={{ sales.paginator.num_pages }}">Last &raquo;</a>
-  {% endif %}
-</div>
-</div>
-</div>
+</table>
+
 {% endblock content %}
-
-
-   
-
-
-

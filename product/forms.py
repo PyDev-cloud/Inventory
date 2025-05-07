@@ -1,7 +1,7 @@
 from django import forms
 from .models import *  # Make sure to import your Product model
 from django.forms import inlineformset_factory, modelformset_factory
-
+from .models import Selles 
 from django import forms
 from .models import Product
 import random
@@ -229,12 +229,21 @@ class PurchaseForm(forms.ModelForm):
             'supplier': forms.Select(attrs={'class': 'form-control'}),
           
         }
+ 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Add an empty label (placeholder-like option) to the 'supplier' field
-        self.fields['supplier'].empty_label = "Select a supplier"  # This simulates a placeholder
-        self.fields['supplier'].widget.attrs.update({
-            'class': 'form-control'
+        
+        self.fields['supplier'].empty_label = "Select a supplier"
+        self.fields['supplier'].widget.attrs.update({'class': 'form-control'})
+
+        # These IDs are needed so JavaScript can interact with the fields
+        self.fields['discount'].widget.attrs.update({
+            'class': 'form-control',
+            'id': 'discountAmount'
+        })
+        self.fields['paidAmount'].widget.attrs.update({
+            'class': 'form-control',
+            'id': 'paidAmount'
         })
 
 class PurchaseItemForm(forms.ModelForm):
