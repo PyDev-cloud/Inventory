@@ -87,8 +87,12 @@ class Purchase(models.Model):
     invoice = models.OneToOneField('PurchaseInvoice', null=True, blank=True, on_delete=models.SET_NULL)
     created_at = models.DateTimeField(auto_now_add=True)
 
-
-
+    @property
+    def total_product_amount(self):
+        return sum(item.product_totalAmount for item in self.purchase_items.all())
+    @property
+    def grand_total(self):
+        return self.alltotalAmount - self.discount
 
     def __str__(self):
         return f"Purchase {self.id}"
@@ -105,7 +109,7 @@ class PurchaseItem(models.Model):
     purchase = models.ForeignKey(Purchase, related_name='purchase_items', on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
-    quantity_type = models.CharField(max_length=10, choices=QUANTITY_TYPE_CHOICES,null=False,blank=False)  # <-- NEW FIELD
+    quantity_type = models.CharField(max_length=10, choices=QUANTITY_TYPE_CHOICES,null=False,blank=False, default="KG")  # <-- NEW FIELD
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     product_totalAmount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
@@ -113,6 +117,8 @@ class PurchaseItem(models.Model):
         if not self.product:
             raise ValidationError("Product is required for each purchase item.")
         super().clean()
+
+    
 
     def save(self, *args, **kwargs):
         if not self.product_totalAmount:
@@ -195,10 +201,17 @@ class Selles(models.Model):
 
 
 class SellesItem(models.Model):
+    QUANTITY_TYPE_CHOICES = (
+        
+        ('KG', 'Kilogram'),
+        ('PCS', 'Pieces'),
+        
+    )
     selles = models.ForeignKey(Selles, related_name='selles_items', on_delete=models.CASCADE)
     product = models.ForeignKey(Product, related_name="Product", on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity_type = models.CharField(max_length=10, choices=QUANTITY_TYPE_CHOICES,null=False,blank=False, default="KG")  # <-- NEW FIELD
     totalAmount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     profit = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 

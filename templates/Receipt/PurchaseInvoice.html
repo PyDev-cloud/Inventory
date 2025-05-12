@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -67,7 +68,7 @@
 <div class="invoice-box">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h3>Purchase Invoice</h3>
-        <img src="https://i.ibb.co/xCcJSyf/duibd.png" class="logo" alt="duibd logo">
+        <img src="{% static "Images/DUIBD.png" %}" class="logo" alt="duibd logo">
     </div>
 
     <div class="row mb-3">
@@ -95,7 +96,8 @@
             <th>SL No</th>
             <th>Product Description</th>
             <th>Price</th>
-            <th>Weight (kg)</th>
+            <th>Quantity</th>
+            <th>Weight</th>
             <th>Amount</th>
         </tr>
         </thead>
@@ -103,35 +105,40 @@
           {% for purchase_item in invoice.purchase.purchase_items.all %}
         <tr>
             <td>{{ forloop.counter }}</td>
-            <td>{{ purchase_item.product.name }}</td>
+            <td class="text-start">{{ purchase_item.product.name }}</td>
             <td>{{ purchase_item.unit_price }}</td>
             <td>{{ purchase_item.quantity }}</td>
-            <td></td>
+            <td>{{purchase_item.quantity_type}}</td> 
+            <td>{{ purchase_item.product_totalAmount}}</td>
         </tr>
         {% endfor %}
-        <tr><td>{{ purchase|length|add:1 }}</td><td>Delivery Charge</td><td colspan="2"></td><td>80.00 /-</td></tr>
+        <tr>
+            <td colspan="5" class="text-end">Delivery Charge</td>
+            <td colspan="1">80.00 </td>
+        </tr>
         <tr>
             <td colspan="2">TAX</td>
             <td>0%</td>
-            <td>Total Amount</td>
-            <td>{{ invoice.total_amount }}/-</td>
+            <td colspan="2" class="text-end">Total Before Discount</td>
+            <td>{{ invoice.purchase.total_product_amount }}</td>
         </tr>
         <tr>
-            <td colspan="4">Discount</td>
-            <td>{{ invoice.discount }}/-</td>
+            <td colspan="5" class="text-end">Discount</td>
+            <td>{{ invoice.purchase.discount }}</td>
         </tr>
         <tr>
-            <td colspan="4">grand Total</td>
-            <td>{{ invoice.grandtotal }}</td>
+            <td colspan="5"  class="text-end">Grand Total</td>
+            <td>{{ invoice.purchase.grand_total }}</td>
         </tr>
         <tr>
-          <td colspan="4">Paid Amount</td>
-          <td>{{ invoice.paidAmount }}</td>
+          <td colspan="5"  class="text-end">Paid Amount</td>
+          <td>{{ invoice.purchase.paidAmount }}</td>
       </tr>
       <tr>
-        <td colspan="4">Due Amount</td>
-        <td>{{ invoice.dueAmount }}</td>
+        <td colspan="5"  class="text-end">Due Amount</td>
+        <td>{{  invoice.purchase.dueAmount }}</td>
     </tr>
+    
         </tbody>
     </table>
 
@@ -153,17 +160,20 @@
 
 
 <script>
-window.onload = function () {
-    const invoiceElement = document.querySelector('.invoice-box');
-    const opt = {
-        margin:       0.5,
-        filename:     'invoice.pdf',
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2 },
-        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+    window.onload = function () {
+        const invoiceElement = document.querySelector('.invoice-box');
+        const opt = {
+            margin: 0.5,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+    
+        html2pdf().set(opt).from(invoiceElement).outputPdf('blob').then(function (pdfBlob) {
+            const blobUrl = URL.createObjectURL(pdfBlob);
+            window.open(blobUrl, '_blank');
+        });
     };
-    html2pdf().set(opt).from(invoiceElement).save();
-};
-</script>
+    </script>
 </body>
 </html>
