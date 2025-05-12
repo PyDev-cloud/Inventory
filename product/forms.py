@@ -159,7 +159,7 @@ class SellesForm(forms.ModelForm):
 class sellesItemForm(forms.ModelForm):
     class Meta:
         model = SellesItem
-        fields = ['product', 'quantity', 'unit_price']
+        fields = ['product', 'quantity', 'unit_price','quantity_type']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -179,6 +179,10 @@ class sellesItemForm(forms.ModelForm):
             'placeholder': 'Enter Unit Price',
             'class': 'form-control'
         })
+        self.fields['quantity_type'].widget.attrs.update({  # <-- new styling for quantity_type
+            'class': 'form-control',
+            'style': 'width: 120px;',
+        })
 
 
 # Define the widgets for the PurchaseItemFormSet
@@ -186,13 +190,14 @@ selles_item_widgets = {
     'product': forms.Select(attrs={'class': 'form-control'}),
     'quantity': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter Quantity', 'style': 'width: 206px;'}),
     'unit_price': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter Unit Price'}),
+    'quantity_type': forms.Select(attrs={'class': 'form-control', 'style': 'width: 120px;'}),  # <-- new widget
     'totalAmount': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
 }
 # Define the PurchaseItemFormSet to handle multiple PurchaseItems
 sellesItemForm = modelformset_factory(
     SellesItem, 
     form=sellesItemForm,  # Use the custom form here
-    fields=['product', 'quantity', 'unit_price'], 
+    fields=['product', 'quantity', 'unit_price','quantity_type'], 
     extra=10,
     widgets=selles_item_widgets  # Pass the widgets here
 )

@@ -32,7 +32,7 @@
 {% endif %}
 
 <div class="container">
-    <h2>Create a Purchase</h2>
+    <h2>Create a Sells </h2>
     <form method="POST" id="purchase-form">
         {% csrf_token %}
 
@@ -51,6 +51,7 @@
                                 <th>Product</th>
                                 <th>Unit Price</th>
                                 <th>Quantity</th>
+                                <th>Quantity Type </th>
                                 <th>Total</th>
                             </tr>
                         </thead>
@@ -88,6 +89,7 @@
                                         </div>
                                     {% endif %}
                                 </td>
+                                <td>{{ form.quantity_type }}</td>
                                 <td><input type="text" name="product_totalAmount" class="form-control" readonly /></td>
                             </tr>
                             {% endfor %}
