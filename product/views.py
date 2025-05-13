@@ -20,7 +20,7 @@ from django.db.models.functions import TruncMonth
 from django.db import transaction
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseNotFound
-
+from django.utils.timezone import make_aware
 from django.views.generic import *
 from .models import *
 from .forms import *
@@ -728,14 +728,15 @@ class SellesCreateView(LoginRequiredMixin, CreateView):
         return context
 
 
-class SellesListView(LoginRequiredMixin, ListView):
+'''class SellesListView(LoginRequiredMixin, ListView):
     model = Selles
-    template_name = 'sells/sellesList.html'  # Template to render the list
-    context_object_name = 'sales'  # Context variable name for the list
+    template_name = 'sells/sellesList.html'  
+    context_object_name = 'sales' 
+    paginate_by = 15  # Show 10 per page
 
-    # You can add pagination if needed
-    paginate_by = 10  # Adjust the number of items per page if required
-    
+    def get_queryset(self):
+        return Selles.objects.all().order_by('-id')  # Optional: latest first
+    '''
 
         
     
@@ -1144,9 +1145,31 @@ class PurchaseItemListView(LoginRequiredMixin, ListView):
     model = Purchase
     template_name = 'purchase/purchaseList.html'
     context_object_name = 'purchases'
-
+    paginate_by = 15
     def get_queryset(self):
-        return Purchase.objects.prefetch_related('purchase_items__product').select_related('supplier')
+        # Fetch the queryset for the Purchase model and prefetch related items.
+        queryset = Purchase.objects.prefetch_related(
+            'purchase_items__product'
+        ).select_related('supplier').order_by('-id')
+
+        # Filter by supplier name (optional GET param: ?supplier=Name)
+        supplier_name = self.request.GET.get('supplier')
+        if supplier_name:
+            queryset = queryset.filter(supplier__name__icontains=supplier_name)
+
+        # Filter by date range (optional GET param: ?start=YYYY-MM-DD&end=YYYY-MM-DD)
+        start_date = self.request.GET.get('start')
+        end_date = self.request.GET.get('end')
+        if start_date and end_date:
+            try:
+                # Ensure that the dates are in a timezone-aware format.
+                start_dt = make_aware(datetime.strptime(start_date, "%Y-%m-%d"))
+                end_dt = make_aware(datetime.strptime(end_date, "%Y-%m-%d"))
+                queryset = queryset.filter(created_at__range=[start_dt, end_dt])
+            except ValueError:
+                pass  # Optionally log this or show an error if needed.
+
+        return queryset
 
 
 
@@ -1156,9 +1179,36 @@ class SellesItemListView(LoginRequiredMixin, ListView):
     model = Selles
     template_name = 'sells/sellesList.html'  # Use correct path
     context_object_name = 'sales'
-
+    paginate_by = 15
     def get_queryset(self):
-        return Selles.objects.prefetch_related('selles_items__product').select_related('customer')
+        queryset = Selles.objects.prefetch_related(
+            'selles_items__product'
+        ).select_related('customer').order_by('-id')
+
+        # Filter by customer name if provided
+        customer_name = self.request.GET.get('customer')
+        if customer_name:
+            queryset = queryset.filter(customer__name__icontains=customer_name)
+
+        # Filter by date range if provided (start and end dates)
+        start_date = self.request.GET.get('start')
+        end_date = self.request.GET.get('end')
+        if start_date and end_date:
+            try:
+                # Parse the start and end dates
+                start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+                end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+
+                # Ensure they are timezone-aware if the field is timezone-aware
+                start_dt = make_aware(start_dt)
+                end_dt = make_aware(end_dt)
+
+                # Filter by the date range using `created_at__date` to only consider the date part
+                queryset = queryset.filter(created_at__date__range=[start_dt.date(), end_dt.date()])
+            except ValueError:
+                pass  # Optionally, log this or show an error if needed.
+
+        return queryset
 
 
 
