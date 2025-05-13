@@ -622,7 +622,7 @@ class SellesInvoiceDetailView(LoginRequiredMixin, CreateView):
 class SellesCreateView(LoginRequiredMixin, CreateView):
     model = Selles
     form_class = SellesForm
-    template_name = 'Sells/SellsCreate.html'
+    template_name = 'sells/sellsCreate.html'
     success_url = reverse_lazy('')  # You should define the actual success URL
     
     def form_valid(self, form):
@@ -730,7 +730,7 @@ class SellesCreateView(LoginRequiredMixin, CreateView):
 
 class SellesListView(LoginRequiredMixin, ListView):
     model = Selles
-    template_name = 'Sells/SellesList.html'  # Template to render the list
+    template_name = 'sells/sellesList.html'  # Template to render the list
     context_object_name = 'sales'  # Context variable name for the list
 
     # You can add pagination if needed
