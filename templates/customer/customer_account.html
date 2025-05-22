@@ -1,0 +1,54 @@
+{% extends "../navbar.html" %}
+{% load static %}
+{% block content %}
+<form method="get" class="row g-3 mb-4">
+    <div class="col-md-4">
+        <label for="start_date" class="form-label">Start Date</label>
+        <input type="date" name="start_date" id="start_date" class="form-control"
+               value="{{ start_date }}">
+    </div>
+    <div class="col-md-4">
+        <label for="end_date" class="form-label">End Date</label>
+        <input type="date" name="end_date" id="end_date" class="form-control"
+               value="{{ end_date }}">
+    </div>
+    <div class="col-md-4 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary me-2">Filter</button>
+        <a href="?" class="btn btn-secondary">Clear</a>
+    </div>
+</form>
+<div class=" my-5">
+  <h2>{{ customer.name }}'s Account</h2>
+  <p><strong>Email:</strong> {{ customer.Email }}</p>
+  <p><strong>Phone:</strong> {{ customer.Mobile }}</p>
+  <p><strong>Address:</strong> {{ customer.Address }}</p>
+  <p><strong>Total Paid:</strong> {{ total_paid }}</p>
+  <p><strong>Total Due:</strong> {{ total_due }}</p>
+
+  <table class="table table-striped mt-4">
+    <thead>
+      <tr>
+        <th>Invoice</th>
+        <th>Date</th>
+        <th>Total</th>
+        <th>Discount</th>
+        <th>Paid</th>
+        <th>Due</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for sell in sells %}
+      <tr>
+        <td>{{ sell.invoice.invoice_number }}</td>
+        <td>{{ sell.created_at|date:"d M Y" }}</td>
+        <td>{{ sell.totalPrice }}</td>
+        <td>{{ sell.discountAmount }}</td>
+        <td>{{ sell.paidAmount }}</td>
+        <td>{{ sell.dueAmount }}</td>
+        
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

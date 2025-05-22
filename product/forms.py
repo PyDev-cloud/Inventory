@@ -294,3 +294,17 @@ PurchaseItemFormSet = modelformset_factory(
     extra=10,
     widgets=purchase_item_widgets  # Pass the widgets here
 )
+
+    
+
+
+class DamagedProductForm(forms.ModelForm):
+    class Meta:
+        model = DamagedProduct
+        fields = ['product', 'quantity', 'purchase_price', 'note']
+        widgets = {
+            'product': forms.Select(attrs={'class': 'form-control'}),
+            'quantity': forms.NumberInput(attrs={'class': 'form-control'}),
+            'purchase_price': forms.NumberInput(attrs={'class': 'form-control'}),
+            'note': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+        }
