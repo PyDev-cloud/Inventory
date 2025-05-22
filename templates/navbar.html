@@ -253,22 +253,20 @@
                   aria-expanded="false"
                 >
                   <i class="fa fa-bell"></i>
-                  <span class="count bg-danger">3</span>
+                  <span class="count bg-danger">{{ low_stock_items|length }}</span>
                 </button>
                 <div class="dropdown-menu" aria-labelledby="notification">
-                  <p class="red">You have 3 Notification</p>
-                  <a class="dropdown-item media" href="#">
-                    <i class="fa fa-check"></i>
-                    <p>Server #1 overloaded.</p>
-                  </a>
-                  <a class="dropdown-item media" href="#">
-                    <i class="fa fa-info"></i>
-                    <p>Server #2 overloaded.</p>
-                  </a>
-                  <a class="dropdown-item media" href="#">
-                    <i class="fa fa-warning"></i>
-                    <p>Server #3 overloaded.</p>
-                  </a>
+                  {% if low_stock_items %}
+                    <p class="red">Low Stock Alerts</p>
+                    {% for item in low_stock_items %}
+                      <a class="dropdown-item media" href="#">
+                        <i class="fa fa-warning text-danger"></i>
+                        <p>{{ item.product.name }} only has {{ item.quantity }} left in stock!</p>
+                      </a>
+                    {% endfor %}
+                  {% else %}
+                    <p class="dropdown-item">All stock levels are healthy.</p>
+                  {% endif %}
                 </div>
               </div>
 
@@ -350,10 +348,17 @@
                   ><i class="fa fa- user"></i>My Profile</a
                 >
 
-                <a class="nav-link" href="#"
-                  ><i class="fa fa- user"></i>Notifications
-                  <span class="count">13</span></a
-                >
+                <a class="nav-link" href="#">
+                  <i class="fa fa-bell"></i>Notifications
+                  <!-- Display dynamic count of low stock items -->
+                  <span class="count bg-danger">
+                    {% if low_stock_items %}
+                      {{ low_stock_items|length }}
+                    {% else %}
+                      0
+                    {% endif %}
+                  </span>
+                </a>
 
                 <a class="nav-link" href="#"
                   ><i class="fa fa -cog"></i>Settings</a

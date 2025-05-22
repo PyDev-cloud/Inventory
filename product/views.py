@@ -645,6 +645,7 @@ class SellesCreateView(LoginRequiredMixin, CreateView):
             quantity = item_form.cleaned_data.get('quantity')
 
             if not product or quantity in [None, 0]:
+                 
                 continue  # Skip invalid entries
 
             form_items.append(item_form)
@@ -1248,3 +1249,7 @@ class InvoiceView(LoginRequiredMixin,TemplateView):
 
         return context
     
+
+
+
+
