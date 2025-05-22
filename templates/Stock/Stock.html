@@ -68,6 +68,7 @@
       <th scope="col">Category</th>
       <th scope="col">Quantity</th>
       <th scope="col">Created Date</th>
+      <th scope="col">Damage</th>
       <th scope="col">Actions</th>
     </tr>
   </thead>
@@ -79,6 +80,8 @@
       <td>{{ c.product.category.name }}</td>
       <td>{{ c.quantity }}</td>
       <td>{{ c.created_at }}</td>
+      <td>{{ c.damaged_quantity }}</td>
+
       <td>
         {% comment %} <a href="{% url 'Reorder' c.product.pk %}" class="btn btn-info" {% endcomment %}
           >Reorder</a

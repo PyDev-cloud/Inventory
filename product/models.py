@@ -68,12 +68,30 @@ class Customer(models.Model):
     def __str__(self):
         return self.name
 
+class DamagedProduct(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()
+    purchase_price = models.DecimalField(max_digits=10, decimal_places=2)
+    note = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    def clean(self):
+        # স্টকে থাকা পরিমাণ চেক করা
+        stock = Stock.objects.filter(product=self.product).first()
+        if stock and self.quantity > stock.quantity:
+            raise ValidationError("ড্যামেজ পরিমাণ স্টকের চেয়ে বেশি হতে পারে না।")
+
+
+    def __str__(self):
+        return f"Damaged: {self.product.name} ({self.quantity})"
+
 class Stock(models.Model):
     product = models.ForeignKey(Product, related_name="stock", on_delete=models.CASCADE)
     quantity = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now=True)
    
-
+    @property
+    def damaged_quantity(self):
+        return self.product.damagedproduct_set.aggregate(total=models.Sum('quantity'))['total'] or 0
 
 
 
@@ -127,7 +145,18 @@ class PurchaseItem(models.Model):
 
 
 
+def generate_invoice_number():
+    last_invoice = SellesInvoice.objects.order_by('id').last()
+    if not last_invoice or not last_invoice.invoice_number:
+        return "INV-0001"
 
+    try:
+        last_number = int(last_invoice.invoice_number.split("-")[1])
+    except (IndexError, ValueError):
+        last_number = 0
+
+    new_number = last_number + 1
+    return f"INV-{new_number:04d}"
 
 
 
@@ -182,21 +211,21 @@ class Selles(models.Model):
    
 
     def save(self, *args, **kwargs):
-        # Ensure the invoice is created automatically if not exists
         if not self.invoice:
             invoice = SellesInvoice.objects.create(
-                invoice_number=str(uuid.uuid4()),  # Generate a unique invoice number
-                total_amount=self.totalPrice,
+                invoice_number=generate_invoice_number(),  # ✅ Sequential Invoice Number
+                total_amount=self.totalPrice or 0,
                 discount=self.discountAmount,
                 paid_amount=self.paidAmount,
+                GrandTotal=self.totalPrice or 0,
+                dueAmount=self.dueAmount or 0,
             )
             self.invoice = invoice
-        
+
         super(Selles, self).save(*args, **kwargs)
 
     def __str__(self):
-        return f'Sell of  {self.customer.name}'
-    
+        return f'Sell of {self.customer.name}'
 
 
 
@@ -230,3 +259,19 @@ class SellesItem(models.Model):
         stock.save()
 
         super().save(*args, **kwargs)
+
+
+
+
+from django.db.models import F
+
+
+
+
+
+
+
+
+
+
+

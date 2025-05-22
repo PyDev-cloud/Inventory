@@ -21,6 +21,7 @@ from django.db import transaction
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseNotFound
 from django.utils.timezone import make_aware
+from django.utils.dateparse import parse_date  # ✅ Required for date filtering
 from django.views.generic import *
 from .models import *
 from .forms import *
@@ -395,14 +396,59 @@ class SupplierList(LoginRequiredMixin,ListView):
             return context
 
 #Customer List View
-class Customerlist(LoginRequiredMixin,ListView):
-        model=Customer
-        template_name="customer/customerlist.html"
-        
-        def get_context_data(self, **kwargs):
-            context = super().get_context_data(**kwargs)
-            context["customer"] = self.model.objects.all()
-            return context
+class CustomerList(LoginRequiredMixin, ListView):
+    model = Customer
+    template_name = "customer/customerlist.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        customer_data = []
+
+        for customer in Customer.objects.all():
+            sells = Selles.objects.filter(customer=customer).order_by('-created_at')
+            total_paid = sells.aggregate(total_paid=Sum('paidAmount'))['total_paid'] or 0
+            total_due = sells.aggregate(total_due=Sum('dueAmount'))['total_due'] or 0
+
+            customer_data.append({
+                'customer': customer,
+                'total_paid': total_paid,
+                'total_due': total_due,
+                'selles_list': sells
+            })
+
+        context["customer_data"] = customer_data
+        return context
+
+
+class CustomerAccountView(LoginRequiredMixin, DetailView):
+    model = Customer
+    template_name = "customer/customer_account.html"
+    context_object_name = "customer"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        customer = self.get_object()
+
+        # Get date filters from GET parameters
+        start_date = self.request.GET.get('start_date')
+        end_date = self.request.GET.get('end_date')
+
+        sells = Selles.objects.filter(customer=customer).order_by('-created_at')
+
+        if start_date:
+            sells = sells.filter(created_at__date__gte=parse_date(start_date))
+        if end_date:
+            sells = sells.filter(created_at__date__lte=parse_date(end_date))
+
+        total_paid = sells.aggregate(Sum('paidAmount'))['paidAmount__sum'] or 0
+        total_due = sells.aggregate(Sum('dueAmount'))['dueAmount__sum'] or 0
+
+        context['sells'] = sells
+        context['total_paid'] = total_paid
+        context['total_due'] = total_due
+        context['start_date'] = start_date
+        context['end_date'] = end_date
+        return context
 
 
 class CustomerCreate(LoginRequiredMixin,CreateView):
@@ -615,7 +661,6 @@ class SellesInvoiceDetailView(LoginRequiredMixin, CreateView):
         selles = Selles.objects.filter(invoice=invoice)
         context['selles'] = selles
         return context
-
 
 
 
@@ -963,10 +1008,12 @@ class StockView(LoginRequiredMixin, View):
         paginator = Paginator(stock_queryset, 10)  # Show 10 items per page
         page = request.GET.get('page')
         stock_page = paginator.get_page(page)
+        damage=DamagedProduct.objects.all()
 
         context = {
             'stock': stock_page,
             'paginator': paginator,
+            'damage':damage
         }
 
         return render(request, self.template_name, context)
@@ -1252,4 +1299,24 @@ class InvoiceView(LoginRequiredMixin,TemplateView):
 
 
 
+
+
+
+
+
+
+
+class DamagedProductCreateView(LoginRequiredMixin, CreateView):
+    model = DamagedProduct
+    form_class = DamagedProductForm
+    template_name = 'damage/damaged_product_form.html'
+    success_url = reverse_lazy('stocklist')
+
+    def form_valid(self, form):
+        product = form.cleaned_data['product']
+        quantity = form.cleaned_data['quantity']
+        stock = Stock.objects.get(product=product)
+        stock.quantity -= quantity
+        stock.save()
+        return super().form_valid(form)
 

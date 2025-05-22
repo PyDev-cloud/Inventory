@@ -41,8 +41,9 @@ urlpatterns = [
 
 
     path('customer/',CustomerCreate.as_view(),name='customer'),
-    path('customerlist/',Customerlist.as_view(),name='customerlist'),
+    path('customerlist/',CustomerList.as_view(),name='customerlist'),
     path('customerUpdate/<int:pk>/edit/',CustomerUpdateView.as_view(),name="customerupdate"),
+    path('customers/account/<int:pk>/', CustomerAccountView.as_view(), name='customer_account'),
     
 
    
@@ -81,6 +82,7 @@ urlpatterns = [
     #path('purchases/', PurchaseListView.as_view(), name='purchase_list'),
 
 
+    path('damaged/add/', DamagedProductCreateView.as_view(), name='add_damaged_product'),
 
 
 
